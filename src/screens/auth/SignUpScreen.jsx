@@ -7,24 +7,24 @@ import Button, { SocialButton } from '../../components/common/Button'
 import { s, vs, ms } from '../../utils/responsive'
 import { useNavigation } from '@react-navigation/native'
 
-const LoginScreen = () => {
+const SignUp = () => {
     const navigation = useNavigation();
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <AppText.h1 style={styles.title}>CircleLink</AppText.h1>
-                <AppText.body style={styles.subtitle}>Welcome Back</AppText.body>
+                <AppText.h2 style={styles.subtitle}>Create Account</AppText.h2>
+                <AppText.small style={styles.subtitle}>Please enter your details to create an account</AppText.small>
             </View>
 
             <View style={styles.form}>
+                <Input placeholder="Name" icon="person-outline" />
                 <Input placeholder="Email" icon="mail-outline" />
                 <Input placeholder="Password" icon="lock-closed-outline" secureTextEntry />
 
-                <TouchableOpacity style={styles.forgotPassword} onPress={() => navigation.navigate('ForgotScreen')}>
-                    <AppText.small style={styles.forgotPasswordText}>Forgot Password?</AppText.small>
-                </TouchableOpacity>
 
-                <Button title="Login" onPress={() => { }} />
+
+                <Button title="Sign Up" onPress={() => { }} />
             </View>
 
             <View style={styles.dividerContainer}>
@@ -41,16 +41,16 @@ const LoginScreen = () => {
                 />
             </View>
             <View style={styles.footer}>
-                <AppText.body>Don't have an account? </AppText.body>
-                <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-                    <AppText.body style={styles.footerText}>Sign Up</AppText.body>
+                <AppText.body>Already have an account? </AppText.body>
+                <TouchableOpacity onPress={() => navigation.navigate('LoginScreen')}>
+                    <AppText.body style={styles.footerText}>Login</AppText.body>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
     )
 }
 
-export default LoginScreen
+export default SignUp
 
 const styles = StyleSheet.create({
     container: {
