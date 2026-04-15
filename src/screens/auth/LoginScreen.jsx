@@ -24,7 +24,7 @@ const LoginScreen = () => {
                     <AppText.small style={styles.forgotPasswordText}>Forgot Password?</AppText.small>
                 </TouchableOpacity>
 
-                <Button title="Login" onPress={() => { }} />
+                <Button title="Login" onPress={() => navigation.navigate('MainTabs')} />
             </View>
 
             <View style={styles.dividerContainer}>

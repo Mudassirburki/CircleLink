@@ -1,8 +1,8 @@
 import { ms, s, vs } from './responsive';
 
 export const COLORS = {
-  primary: '#007AFF',     // Snap Blue
-  secondary: '#FF9500',   // Talk Orange
+  primary: '#AF1A5D',     // Snap Blue
+  secondary: '#AF1A5D',   // Talk Orange
   brandPurple: 'gray', // Connector Purple
   background: '#F8F9FA',
   surface: '#FFFFFF',
@@ -10,7 +10,7 @@ export const COLORS = {
   subtext: '#000000A6',
   border: '#E5E5EA',
   error: '#FF3B30',
-  success: '#25D366', // Keep WhatsApp success green
+  success: '#12ac4bff', // Keep WhatsApp success green
 
   // Brand Gradients based on Logo
   gradientPrimary: ['#00ADEE', '#007AFF'], // Blue gradient
@@ -49,7 +49,7 @@ export const TYPOGRAPHY = {
   body: {
     fontSize: ms(16),
     fontWeight: '400',
-    color: COLORS.brandPurple,
+    color: COLORS.secondary,
   },
   subtext: {
     fontSize: ms(14),
