@@ -17,6 +17,7 @@ const HomeScreen = () => {
             </View>
             <View style={{ flex: 1 }}>
                 <TopTabBar />
+
             </View>
         </SafeAreaView>
     )

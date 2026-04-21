@@ -3,21 +3,17 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import LoginScreen from "../screens/auth/LoginScreen";
 import SignUp from '../screens/auth/SignUpScreen';
 import ForgotScreen from '../screens/auth/ForgotScreen';
-import HomeScreen from '../screens/home/HomeScreen';
-import BottomTabNavigator from './BottomTabNavigator';
-
 
 const Stack = createNativeStackNavigator();
-const AppNavigator = () => {
+
+const AuthNavigator = () => {
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="LoginScreen" component={LoginScreen} />
             <Stack.Screen name="SignUp" component={SignUp} />
             <Stack.Screen name="ForgotScreen" component={ForgotScreen} />
-            <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
-
         </Stack.Navigator>
-    )
-}
+    );
+};
 
-export default AppNavigator;
+export default AuthNavigator;

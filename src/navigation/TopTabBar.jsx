@@ -19,6 +19,7 @@ const TopTabBar = () => {
                     height: 3,
                     borderRadius: 3,
 
+
                 },
                 tabBarLabelStyle: {
                     fontSize: ms(14),
@@ -39,6 +40,7 @@ const TopTabBar = () => {
             <Tab.Screen name="Feed" component={FeedScreen} />
             <Tab.Screen name="Live" component={LiveScreen} />
             <Tab.Screen name="Explore" component={ExploreScreen} />
+
         </Tab.Navigator>
     );
 };

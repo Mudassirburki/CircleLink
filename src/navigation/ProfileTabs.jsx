@@ -50,6 +50,8 @@ const ProfileTabs = () => {
             <Tab.Screen name="Posts" component={UserPosts} />
             <Tab.Screen name="Liked" component={LikedPosts} />
             <Tab.Screen name="Saved" component={SavedPosts} />
+
+
         </Tab.Navigator>
     );
 };

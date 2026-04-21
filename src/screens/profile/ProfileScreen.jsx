@@ -9,14 +9,17 @@ import StatsRow from '../../components/ui/ProfileInfo'
 import AppText from '../../components/common/AppText'
 import { TouchableOpacity } from 'react-native'
 import ProfileTabs from '../../navigation/ProfileTabs'
+import { useNavigation } from '@react-navigation/native'
+
 
 const ProfileScreen = () => {
+    const navigation = useNavigation();
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <Ionicons name="arrow-back" size={24} color="black" />
                 <Text style={styles.headerTitle}>Profile</Text>
-                <Ionicons name="ellipsis-vertical" size={24} color="black" />
+                <Ionicons name="menu" size={24} color="black" onPress={() => navigation.navigate('Settings')} />
             </View>
 
             <View style={styles.profileTopSection}>
