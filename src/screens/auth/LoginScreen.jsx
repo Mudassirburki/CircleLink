@@ -1,14 +1,38 @@
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import { StyleSheet, TouchableOpacity, View, Alert } from 'react-native'
+import React, { useState } from 'react'
 import AppText from '../../components/common/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Input from '../../components/common/Input'
 import Button, { SocialButton } from '../../components/common/Button'
 import { s, vs, ms } from '../../utils/responsive'
 import { useNavigation } from '@react-navigation/native'
+import { signIn } from '../../services/AuthService'
+
 
 const LoginScreen = () => {
     const navigation = useNavigation();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+
+
+    const handleLogin = async () => {
+        if (!email || !password) {
+            Alert.alert("Error", "Please fill all fields");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await signIn(email, password);
+            // navigation.navigate('MainTabs'); // Handled by RootNavigator
+        } catch (error) {
+            Alert.alert("Login Failed", error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
@@ -17,14 +41,27 @@ const LoginScreen = () => {
             </View>
 
             <View style={styles.form}>
-                <Input placeholder="Email" icon="mail-outline" />
-                <Input placeholder="Password" icon="lock-closed-outline" secureTextEntry />
+                <Input
+                    placeholder="Email"
+                    icon="mail-outline"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                />
+                <Input
+                    placeholder="Password"
+                    icon="lock-closed-outline"
+                    secureTextEntry
+                    value={password}
+                    onChangeText={setPassword}
+                />
 
                 <TouchableOpacity style={styles.forgotPassword} onPress={() => navigation.navigate('ForgotScreen')}>
                     <AppText.small style={styles.forgotPasswordText}>Forgot Password?</AppText.small>
                 </TouchableOpacity>
 
-                <Button title="Login" onPress={() => navigation.navigate('MainTabs')} />
+                <Button title="Login" onPress={handleLogin} loading={loading} />
             </View>
 
             <View style={styles.dividerContainer}>

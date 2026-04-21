@@ -1,13 +1,37 @@
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import { StyleSheet, TouchableOpacity, View, Alert } from 'react-native'
+import React, { useState } from 'react'
 import AppText from '../../components/common/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Input from '../../components/common/Input'
 import Button, { SocialButton } from '../../components/common/Button'
 import { s, vs, ms } from '../../utils/responsive'
 import { useNavigation } from '@react-navigation/native'
+import { signUp, signIn } from '../../services/AuthService'
 
 const SignUp = () => {
+
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleSignUp = async () => {
+        if (!email || !password) {
+            Alert.alert("Error", "Please fill all fields");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await signUp(email, password);
+            // navigation.navigate('MainTabs'); // Handled by RootNavigator
+        } catch (error) {
+            Alert.alert("Login Failed", error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
     const navigation = useNavigation();
     return (
         <SafeAreaView style={styles.container}>
@@ -18,13 +42,13 @@ const SignUp = () => {
             </View>
 
             <View style={styles.form}>
-                <Input placeholder="Name" icon="person-outline" />
-                <Input placeholder="Email" icon="mail-outline" />
-                <Input placeholder="Password" icon="lock-closed-outline" secureTextEntry />
+                <Input value={name} onChangeText={setName} placeholder="Name" icon="person-outline" />
+                <Input value={email} onChangeText={setEmail} placeholder="Email" icon="mail-outline" />
+                <Input value={password} onChangeText={setPassword} placeholder="Password" icon="lock-closed-outline" secureTextEntry />
 
 
 
-                <Button title="Sign Up" onPress={() => { }} />
+                <Button title="Sign Up" onPress={handleSignUp} />
             </View>
 
             <View style={styles.dividerContainer}>
