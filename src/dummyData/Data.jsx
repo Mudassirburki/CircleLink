@@ -1,3 +1,5 @@
+import { COLORS } from '../utils/theme';
+
 export const storyData = [
     {
         id: 1,
@@ -185,4 +187,45 @@ export const exploreData = [
         image: require('../assets/avatar3.jpg'),
     },
 
+]
+
+export const settingsData = [
+    {
+        id: '1',
+        title: 'Edit Profile',
+        subtitle: 'Update your profile information',
+        icon: 'person-outline',
+        type: 'chevron',
+        route: 'EditProfile'
+    },
+    {
+        id: '2',
+        title: 'Push Notifications',
+        subtitle: 'Control your notifications',
+        icon: 'notifications-outline',
+        type: 'toggle'
+    },
+    {
+        id: '3',
+        title: 'Dark Mode',
+        subtitle: 'Toggle dark appearance',
+        icon: 'moon-outline',
+        type: 'toggle'
+    },
+    {
+        id: '4',
+        title: 'Help Center',
+        subtitle: 'Get help and support',
+        icon: 'help-circle-outline',
+        type: 'chevron',
+        route: 'HelpCenter'
+    },
+    {
+        id: '5',
+        title: 'Logout',
+        subtitle: 'Sign out of your account',
+        icon: 'log-out-outline',
+        type: 'chevron',
+        color: "red",
+    }
 ]

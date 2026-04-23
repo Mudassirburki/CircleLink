@@ -7,7 +7,19 @@ import { COLORS } from '../../utils/theme'
 import { postData, storyData } from '../../dummyData/Data'
 import PostCard from '../../components/ui/PostCard'
 
+import { usePosts } from '../../hooks/usePosts'
+
 const FeedScreen = () => {
+    const { posts, loading, toggleLike } = usePosts();
+
+    if (loading) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <AppText.body>Loading feed...</AppText.body>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.storyContainer} >
@@ -41,9 +53,16 @@ const FeedScreen = () => {
             </View>
             <View style={styles.feedContent}>
                 <FlatList
-                    data={postData}
-                    renderItem={({ item }) => <PostCard post={item} />}
+                    data={posts}
+                    renderItem={({ item }) => (
+                        <PostCard
+                            post={item}
+                            onLike={toggleLike}
+                            onComment={(postId) => console.log('Open comments for', postId)}
+                        />
+                    )}
                     keyExtractor={(item) => item.id.toString()}
+                    contentContainerStyle={{ paddingBottom: vs(20) }}
                 />
             </View>
         </View>

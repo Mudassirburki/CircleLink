@@ -6,8 +6,7 @@ import AppText from '../common/AppText'
 const ExploreCard = ({ item }) => {
     return (
         <View style={styles.container}>
-            <Image source={item.image} style={styles.image} />
-
+            <Image source={{ uri: item.imageUrl }} style={styles.image} />
         </View>
     )
 }

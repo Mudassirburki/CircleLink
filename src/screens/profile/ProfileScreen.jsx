@@ -12,34 +12,59 @@ import ProfileTabs from '../../navigation/ProfileTabs'
 import { useNavigation } from '@react-navigation/native'
 
 
+import { useUser } from '../../hooks/useUser'
+
 const ProfileScreen = () => {
     const navigation = useNavigation();
+    const { userData, loading } = useUser();
+
+    if (loading) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <AppText.body>Loading profile...</AppText.body>
+            </View>
+        );
+    }
+
+    const user = userData || {
+        name: 'Guest User',
+        username: '@guest',
+        bio: 'No bio available',
+        avatar: null
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Ionicons name="arrow-back" size={24} color="black" />
+                <Ionicons name="arrow-back" size={24} color="black" onPress={() => navigation.goBack()} />
                 <Text style={styles.headerTitle}>Profile</Text>
                 <Ionicons name="menu" size={24} color="black" onPress={() => navigation.navigate('Settings')} />
             </View>
 
             <View style={styles.profileTopSection}>
                 <View style={styles.profileContainer}>
-                    <Image source={require('../../assets/Mb.jpeg')} style={styles.profileImage} />
+                    <Image
+                        source={user.avatar ? { uri: user.avatar } : require('../../assets/user.png')}
+                        style={styles.profileImage}
+                    />
                     <StatsRow />
                 </View>
 
                 <View style={styles.profileInfo}>
-                    <AppText.body style={styles.profileName}>Mudassir Burki</AppText.body>
-                    <AppText.body style={styles.profileUsername}>@burki</AppText.body>
-                    <AppText.body style={styles.profileBio}>App Developer | JavaScript | React Native</AppText.body>
+                    <AppText.body style={styles.profileName}>{user.name}</AppText.body>
+                    <AppText.body style={styles.profileUsername}>@{user.username || 'user'}</AppText.body>
+                    <AppText.body style={styles.profileBio}>{user.bio}</AppText.body>
                 </View>
 
                 <View style={styles.profileActions}>
-                    <TouchableOpacity style={styles.profileActionsButton}>
-                        <AppText.body style={styles.profileActionsButtonText}>Follow</AppText.body>
+                    <TouchableOpacity
+                        style={styles.profileActionsButton}
+                        onPress={() => navigation.navigate('EditProfile', { user })}
+                    >
+                        <AppText.body style={styles.profileActionsButtonText}>Edit Profile</AppText.body>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.profileActionsButton}>
-                        <AppText.body style={styles.profileActionsButtonText}>Message</AppText.body>
+                        <AppText.body style={styles.profileActionsButtonText}>Share Profile</AppText.body>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -82,8 +107,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     profileImage: {
-        width: ms(80),
-        height: ms(80),
+        width: ms(70),
+        height: ms(70),
         borderRadius: ms(40),
     },
     profileInfo: {
