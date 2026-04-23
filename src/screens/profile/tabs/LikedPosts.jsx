@@ -13,7 +13,13 @@ const LikedPosts = () => {
             <FlatList
                 data={likedPosts}
                 keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => <PostCard post={item} />}
+                renderItem={({ item }) => (
+                    <PostCard 
+                        post={item} 
+                        onLike={() => {}} 
+                        onComment={() => {}}
+                    />
+                )}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
             />

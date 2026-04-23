@@ -24,7 +24,7 @@ const SignUp = () => {
 
         setLoading(true);
         try {
-            await signUp(email, password);
+            await signUp(email, password, name);
             // navigation.navigate('MainTabs'); // Handled by RootNavigator
         } catch (error) {
             Alert.alert("Login Failed", error.message);

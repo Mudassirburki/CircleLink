@@ -10,110 +10,99 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { s, vs } from "../../utils/responsive";
 import { COLORS } from "../../utils/theme";
 
-const formatLikes = (n) => {
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
-    if (n >= 1000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "K";
-    return n.toString();
-};
+import CommentsModal from './CommentsModal';
+import auth from "@react-native-firebase/auth";
 
-const PostCard = ({ post }) => {
-    const [liked, setLiked] = useState(post.liked);
-    const [saved, setSaved] = useState(post.saved);
-    const [likes, setLikes] = useState(post.likes);
-
-    const toggleLike = () => {
-        setLiked(!liked);
-        setLikes((l) => (liked ? l - 1 : l + 1));
+const PostCard = ({ post, onLike, onComment }) => {
+    if (!post) return null;
+    const [commentsVisible, setCommentsVisible] = useState(false);
+    const currentUserId = auth().currentUser?.uid;
+    const isLiked = Array.isArray(post.likes) ? post.likes.includes(currentUserId) : false;
+    const formatLikes = (count) => {
+        if (!count) return 0;
+        if (count >= 1000) {
+            return (count / 1000).toFixed(1) + "k";
+        }
+        return count;
     };
 
     return (
         <View style={styles.card}>
-
-            {/* Header */}
+            {/* Header ... same ... */}
             <View style={styles.header}>
                 <View style={styles.userInfo}>
                     <View>
-                        <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
-                        {post.active && <View style={styles.active} />}
-                        <View style={styles.active} />
-                        <View style={styles.active} />
-                        <View style={styles.active} />
-
+                        <Image
+                            source={post.userImage ? { uri: post.userImage } : require('../../assets/user.png')}
+                            style={styles.avatar}
+                        />
                     </View>
 
                     <View>
                         <View style={styles.nameRow}>
-                            <Text style={styles.name}>{post.user.name}</Text>
-                            {post.user.verified && (
-                                <Ionicons name="checkmark-circle" size={14} color="#3897f0" />
-                            )}
+                            <Text style={styles.name}>{post.username}</Text>
                         </View>
-                        <Text style={styles.time}>{post.timeAgo} ago</Text>
+                        <Text style={styles.time}>{post.createdAt && typeof post.createdAt.toDate === 'function' ? new Date(post.createdAt.toDate()).toLocaleDateString() : 'Just now'}</Text>
                     </View>
                 </View>
 
                 <Ionicons name="ellipsis-horizontal" size={20} color="#666" />
             </View>
 
-            {/* Image */}
-            {post.image && (
+            {/* Content (Caption) */}
+            <View style={styles.captionContainer}>
+                <Text style={[styles.caption, !post.imageUrl && styles.textOnlyCaption]}>
+                    {post.caption}
+                </Text>
+            </View>
 
-                <TouchableOpacity activeOpacity={0.9} onPress={toggleLike}>
-                    <Image source={{ uri: post.image }} style={styles.postImage} />
-
+            {/* Optional Image */}
+            {post.imageUrl && (
+                <TouchableOpacity activeOpacity={0.9} onPress={() => onLike(post.id, isLiked)}>
+                    <Image source={{ uri: post.imageUrl }} style={styles.postImage} />
                 </TouchableOpacity>
             )}
 
             {/* Actions */}
             <View style={styles.actionsContainer}>
-
                 <View style={styles.actionsRow}>
                     <View style={styles.leftActions}>
-
-                        <TouchableOpacity onPress={toggleLike}>
+                        <TouchableOpacity onPress={() => onLike(post.id, isLiked)}>
                             <Ionicons
-                                name={liked ? "heart" : "heart-outline"}
+                                name={isLiked ? "heart" : "heart-outline"}
                                 size={22}
-                                color={liked ? "red" : "#000"}
+                                color={isLiked ? "red" : "#000"}
                             />
                         </TouchableOpacity>
 
-                        <Ionicons name="chatbubble-outline" size={22} color="#000" />
+                        <TouchableOpacity onPress={() => setCommentsVisible(true)}>
+                            <Ionicons name="chatbubble-outline" size={22} color="#000" />
+                        </TouchableOpacity>
                         <Ionicons name="paper-plane-outline" size={22} color="#000" />
                     </View>
 
-                    <TouchableOpacity onPress={() => setSaved(!saved)}>
-                        <Ionicons
-                            name={saved ? "bookmark" : "bookmark-outline"}
-                            size={22}
-                            color="#000"
-                        />
-                    </TouchableOpacity>
+                    <Ionicons name="bookmark-outline" size={22} color="#000" />
                 </View>
 
                 {/* Stats */}
                 <View style={styles.statsRow}>
                     <Ionicons name="heart" size={14} color="red" />
-                    <Text style={styles.boldText}>{formatLikes(likes)}</Text>
+                    <Text style={styles.boldText}>{formatLikes(post.likesCount)} likes</Text>
 
                     <Text style={styles.dot}>·</Text>
 
-                    <Ionicons name="chatbubble-outline" size={14} color="#777" />
-                    <Text style={styles.lightText}>{post.comments}</Text>
-
-                    <Text style={styles.dot}>·</Text>
-
-                    <Ionicons name="paper-plane-outline" size={14} color="#777" />
-                    <Text style={styles.lightText}>{post.shares}</Text>
+                    <TouchableOpacity onPress={() => setCommentsVisible(true)} style={styles.statsRow}>
+                        <Ionicons name="chatbubble-outline" size={14} color="#777" />
+                        <Text style={styles.lightText}>{post.commentsCount} comments</Text>
+                    </TouchableOpacity>
                 </View>
-
-                {/* Caption */}
-                <Text style={styles.caption}>
-                    <Text style={styles.boldText}>{post.user.username} </Text>
-                    {post.caption}
-                </Text>
-
             </View>
+
+            <CommentsModal
+                visible={commentsVisible}
+                onClose={() => setCommentsVisible(false)}
+                postId={post.id}
+            />
         </View>
     );
 };
@@ -217,9 +206,19 @@ const styles = StyleSheet.create({
         marginHorizontal: 4,
         color: "#777",
     },
-
+    captionContainer: {
+        paddingHorizontal: 12,
+        paddingBottom: 8,
+    },
     caption: {
-        marginTop: 6,
-        fontSize: 14,
+        fontSize: 15,
+        color: COLORS.text,
+        lineHeight: 20,
+    },
+    textOnlyCaption: {
+        fontSize: 18,
+        fontWeight: '500',
+        lineHeight: 24,
+        color: '#000',
     },
 })

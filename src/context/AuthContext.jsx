@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import API from '../services/api';
+import { signUp, signIn, signOut, getCurrentUser } from '../services/AuthService';
 
 export const AuthContext = createContext();
 
@@ -14,7 +14,6 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -22,21 +21,22 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     /**
-     * 1. Load User from storage on startup
+     * 1. Load User from storage/firebase on startup
      */
     const loadUser = async () => {
         try {
-            const storedToken = await AsyncStorage.getItem('token');
-            const storedUser = await AsyncStorage.getItem('user');
-
-            if (storedToken && storedUser) {
-                setToken(storedToken);
-                const parsedUser = JSON.parse(storedUser);
-                setUser(parsedUser);
-                console.log('[AUTH] User loaded from storage');
+            const firebaseUser = await getCurrentUser();
+            if (firebaseUser) {
+                setUser(firebaseUser);
+                console.log('[AUTH] User loaded from Firebase');
+            } else {
+                const storedUser = await AsyncStorage.getItem('user');
+                if (storedUser) {
+                    setUser(JSON.parse(storedUser));
+                }
             }
         } catch (error) {
-            console.error('[AUTH] Failed to load user from storage', error);
+            console.error('[AUTH] Failed to load user', error);
         } finally {
             setLoading(false);
         }
@@ -44,36 +44,26 @@ export const AuthProvider = ({ children }) => {
 
     /**
      * 2. Signup Function
-     * Safely handles cases where token might be missing
      */
-    const signup = async (name, email, phone, password) => {
+    const signup = async (email, password, name, phone) => {
         try {
-            const res = await API.post('/auth/signup', { name, email, phone, password });
+            const userCredential = await signUp(email, password);
+            const firebaseUser = userCredential.user;
 
-            const { token: receivedToken, user: receivedUser } = res.data;
+            // In a real app, you'd save name and phone to Firestore here
+            const userData = {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                displayName: name,
+                phone: phone
+            };
 
-            // Check if user object exists (minimum requirement for success)
-            if (!receivedUser) {
-                return { success: false, message: 'Signup failed: Server did not return user data' };
-            }
+            await AsyncStorage.setItem('user', JSON.stringify(userData));
+            setUser(userData);
 
-            // Handle optional token (Backend might require manual login after signup)
-            if (receivedToken) {
-                await AsyncStorage.setItem('token', String(receivedToken));
-                await AsyncStorage.setItem('user', JSON.stringify(receivedUser));
-                setToken(receivedToken);
-                setUser(receivedUser);
-                return { success: true, message: 'Signup successful!' };
-            } else {
-                // If no token, user is signed up but NOT logged in (depends on backend logic)
-                return {
-                    success: true,
-                    message: 'Account created successfully! Please log in.',
-                    requiresLogin: true
-                };
-            }
+            return { success: true, message: 'Signup successful!' };
         } catch (error) {
-            const message = error.response?.data?.message || error.message || 'Signup failed';
+            const message = error.message || 'Signup failed';
             console.error('[AUTH] Signup error:', message);
             return { success: false, message };
         }
@@ -84,21 +74,21 @@ export const AuthProvider = ({ children }) => {
      */
     const login = async (email, password) => {
         try {
-            const res = await API.post('/auth/login', { email, password });
-            const { token: receivedToken, user: receivedUser } = res.data;
+            const userCredential = await signIn(email, password);
+            const firebaseUser = userCredential.user;
 
-            if (!receivedToken || !receivedUser) {
-                return { success: false, message: 'Invalid server response: Missing credentials' };
-            }
+            const userData = {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                displayName: firebaseUser.displayName || 'User',
+            };
 
-            await AsyncStorage.setItem('token', String(receivedToken));
-            await AsyncStorage.setItem('user', JSON.stringify(receivedUser));
+            await AsyncStorage.setItem('user', JSON.stringify(userData));
+            setUser(userData);
 
-            setToken(receivedToken);
-            setUser(receivedUser);
             return { success: true, message: 'Login successful!' };
         } catch (error) {
-            const message = error.response?.data?.message || error.message || 'Login failed';
+            const message = error.message || 'Login failed';
             console.error('[AUTH] Login error:', message);
             return { success: false, message };
         }
@@ -109,10 +99,10 @@ export const AuthProvider = ({ children }) => {
      */
     const logout = async () => {
         try {
-            await AsyncStorage.multiRemove(['token', 'user']);
-            setToken(null);
+            await signOut();
+            await AsyncStorage.removeItem('user');
             setUser(null);
-            console.log('[AUTH] Logged out');
+            console.log('[AUTH] Logged out from Firebase');
         } catch (error) {
             console.error('[AUTH] Logout error:', error);
         }
@@ -138,14 +128,12 @@ export const AuthProvider = ({ children }) => {
     return (
         <AuthContext.Provider value={{
             user,
-            token,
             signup,
             login,
             logout,
             updateUser,
             loading,
             setUser,
-            setToken
         }}>
             {children}
         </AuthContext.Provider>

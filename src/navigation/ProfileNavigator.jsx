@@ -8,6 +8,7 @@ const ProfileNavigator = () => {
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+
         </Stack.Navigator>
     );
 };

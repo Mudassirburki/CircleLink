@@ -6,14 +6,16 @@ import Ionicons from 'react-native-vector-icons/Ionicons'
 import { ms, s, vs } from '../../utils/responsive'
 import { COLORS } from '../../utils/theme'
 import TopTabBar from '../../navigation/TopTabBar'
+import { useNavigation } from '@react-navigation/native'
 
 
 const HomeScreen = () => {
+    const navigation = useNavigation();
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <AppText.body style={styles.title}>CircleLink</AppText.body>
-                <Ionicons name="notifications-outline" size={24} color={"#000"} />
+                <Ionicons name="notifications-outline" size={24} onPress={() => { }} color={"#000"} />
             </View>
             <View style={{ flex: 1 }}>
                 <TopTabBar />

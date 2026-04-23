@@ -4,6 +4,7 @@ import AuthNavigator from './AuthNavigator';
 import MainTabNavigator from './MainTabNavigator';
 import Settings from '../screens/settings/Settings';
 import auth from '@react-native-firebase/auth';
+import EditProfile from '../screens/profile/EditProfile';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +31,7 @@ const RootNavigator = () => {
                 <>
                     <Stack.Screen name="MainTabs" component={MainTabNavigator} />
                     <Stack.Screen name="Settings" component={Settings} />
+                    <Stack.Screen name="EditProfile" component={EditProfile} />
                 </>
             ) : (
                 <Stack.Screen name="Auth" component={AuthNavigator} />

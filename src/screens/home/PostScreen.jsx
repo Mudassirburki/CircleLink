@@ -8,52 +8,104 @@ import Ionicons from 'react-native-vector-icons/Ionicons'
 import { TouchableOpacity } from 'react-native'
 
 
+import { useState } from 'react'
+import { launchImageLibrary } from 'react-native-image-picker'
+import { usePosts } from '../../hooks/usePosts'
+import { useNavigation } from '@react-navigation/native'
+import { useUser } from '../../hooks/useUser'
+
 const PostScreen = () => {
+    const [caption, setCaption] = useState('');
+    const [imageUri, setImageUri] = useState(null);
+    const { createPost, uploading } = usePosts();
+    const navigation = useNavigation();
+    const { userData } = useUser();
+
+    const user = userData || {
+        name: 'Guest User',
+        username: '@guest',
+        avatar: null
+    };
+
+    const handlePickImage = async () => {
+        const result = await launchImageLibrary({
+            mediaType: 'photo',
+            quality: 0.8,
+        });
+
+        if (!result.didCancel && result.assets && result.assets.length > 0) {
+            setImageUri(result.assets[0].uri);
+        }
+    };
+
+    const handlePost = async () => {
+        if (!caption.trim()) {
+            alert('Please write something');
+            return;
+        }
+        try {
+            await createPost(imageUri, caption);
+            alert('Post created successfully!');
+            navigation.goBack();
+        } catch (error) {
+            alert('Failed to create post');
+        }
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Ionicons name="arrow-back" size={24} color={"#000"} />
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Ionicons name="arrow-back" size={24} color={"#000"} />
+                </TouchableOpacity>
                 <AppText.body style={styles.title}>New Post</AppText.body>
-                <TouchableOpacity style={styles.postButton}>
-                    <AppText.body style={styles.postButtonText}>Post</AppText.body>
-
+                <TouchableOpacity
+                    style={[styles.postButton, uploading && { opacity: 0.5 }]}
+                    onPress={handlePost}
+                    disabled={uploading}
+                >
+                    <AppText.body style={styles.postButtonText}>
+                        {uploading ? 'Posting...' : 'Post'}
+                    </AppText.body>
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.divider}>
-
-            </View>
+            <View style={styles.divider} />
 
             <View style={styles.postContainer}>
                 <View style={styles.profileContainer}>
-                    <Image source={require('../../assets/Mb.jpeg')} style={styles.profileImage} />
+                    <Image source={require('../../assets/user.png')} style={styles.profileImage} />
                     <View style={styles.profileInfo}>
-                        <AppText.body style={styles.profileName}>Mudassir burki</AppText.body>
-                        <AppText.body style={styles.profileUsername}>@burki</AppText.body>
+                        <AppText.body style={styles.profileName}>{user.name}</AppText.body>
+                        <AppText.body style={styles.profileUsername}>{user.username}</AppText.body>
                     </View>
                 </View>
+
                 <TextInput
                     style={styles.postInput}
                     placeholder="What's on your mind?"
                     multiline
+                    value={caption}
+                    onChangeText={setCaption}
                 />
+
+                {imageUri && (
+                    <View style={styles.previewContainer}>
+                        <Image source={{ uri: imageUri }} style={styles.previewImage} />
+                        <TouchableOpacity style={styles.removeImage} onPress={() => setImageUri(null)}>
+                            <Ionicons name="close-circle" size={24} color="red" />
+                        </TouchableOpacity>
+                    </View>
+                )}
+
                 <View style={styles.postOptions}>
-                    <TouchableOpacity style={styles.postOption}>
+                    <TouchableOpacity style={styles.postOption} onPress={handlePickImage}>
                         <Ionicons name="image" size={24} color={COLORS.primary} />
                         <AppText.body style={styles.postOptionText}>Image</AppText.body>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.postOption}>
-                        <Ionicons name="videocam-outline" size={24} color={COLORS.primary} />
-                        <AppText.body style={styles.postOptionText}>Video</AppText.body>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.postOption}>
-                        <Ionicons name="location" size={24} color={COLORS.primary} />
-                        <AppText.body style={styles.postOptionText}>Location</AppText.body>
-                    </TouchableOpacity>
+                    {/* ... other options ... */}
                 </View>
-
             </View>
-
         </SafeAreaView>
     )
 }
@@ -138,5 +190,25 @@ const styles = StyleSheet.create({
     postOptionText: {
         fontSize: ms(14),
         color: COLORS.subtext,
+    },
+    previewContainer: {
+        marginTop: vs(20),
+        width: '100%',
+        height: vs(300),
+        borderRadius: 12,
+        overflow: 'hidden',
+        position: 'relative',
+    },
+    previewImage: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
+    removeImage: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        backgroundColor: 'rgba(255,255,255,0.7)',
+        borderRadius: 15,
     },
 })
