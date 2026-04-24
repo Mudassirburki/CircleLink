@@ -32,7 +32,14 @@ export const createPost = async (imageUri, caption) => {
             createdAt: firestore.FieldValue.serverTimestamp(),
         };
 
-        return await postCollection.add(postData);
+        const docRef = await postCollection.add(postData);
+
+        // 3. Increment postsCount in user document
+        await firestore().collection('users').doc(user.uid).update({
+            postsCount: firestore.FieldValue.increment(1)
+        });
+
+        return docRef;
     } catch (error) {
         console.error('Error creating post:', error);
         throw error;
@@ -51,6 +58,39 @@ export const getFeedPosts = (callback) => {
         }, error => {
             console.error('Error fetching feed posts:', error);
         });
+};
+
+/**
+ * Fetch posts with pagination (cursor-based)
+ * @param {Object} lastVisible - The last document snapshot from the previous page
+ * @param {number} pageSize - Number of posts to fetch
+ */
+export const getPaginatedPosts = async (lastVisible = null, pageSize = 5) => {
+    try {
+        let query = postCollection.orderBy('createdAt', 'desc').limit(pageSize);
+
+        if (lastVisible) {
+            query = query.startAfter(lastVisible);
+        }
+
+        const snapshot = await query.get();
+        
+        const posts = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+
+        const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        
+        return {
+            posts,
+            lastDoc,
+            hasMore: snapshot.docs.length === pageSize
+        };
+    } catch (error) {
+        console.error('Error fetching paginated posts:', error);
+        throw error;
+    }
 };
 
 export const toggleLike = async (postId, userId, isLiked) => {

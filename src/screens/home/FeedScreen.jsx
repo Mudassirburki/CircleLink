@@ -1,70 +1,122 @@
-import { FlatList, StyleSheet, Text, View, Image } from 'react-native'
-import React from 'react'
+import { FlatList, StyleSheet, View, Image, ActivityIndicator, RefreshControl } from 'react-native'
+import React, { useCallback, useMemo } from 'react'
 import AppText from '../../components/common/AppText'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import { ms, s, vs } from '../../utils/responsive'
 import { COLORS } from '../../utils/theme'
-import { postData, storyData } from '../../dummyData/Data'
+import { storyData } from '../../dummyData/Data'
 import PostCard from '../../components/ui/PostCard'
-
 import { usePosts } from '../../hooks/usePosts'
 
 const FeedScreen = () => {
-    const { posts, loading, toggleLike } = usePosts();
+    const { 
+        posts, 
+        loading, 
+        loadingMore, 
+        refreshing, 
+        hasMore, 
+        fetchPosts, 
+        loadMorePosts, 
+        toggleLike 
+    } = usePosts();
 
-    if (loading) {
+    // Render footer loader for infinite scroll
+    const renderFooter = useCallback(() => {
+        if (!loadingMore) return <View style={{ height: vs(20) }} />;
         return (
-            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <AppText.body>Loading feed...</AppText.body>
+            <View style={styles.footerLoader}>
+                <ActivityIndicator size="small" color={COLORS.primary} />
+                <AppText.body style={styles.loaderText}>Loading more posts...</AppText.body>
+            </View>
+        );
+    }, [loadingMore]);
+
+    // Header component for FlashList (includes stories)
+    const renderHeader = useMemo(() => (
+        <View style={styles.storyContainer} >
+            <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.storyListContent}
+                data={[{ id: 'yours', name: 'Your Story', image: null }, ...storyData]}
+                renderItem={({ item }) => (
+                    <View style={styles.storyItem}>
+                        <View style={[
+                            styles.storyImageContainer,
+                            item.id !== 'yours' && styles.storyRing
+                        ]}>
+                            {item.id === 'yours' ? (
+                                <View style={styles.yourStoryPlaceholder}>
+                                    <Ionicons name="add" size={30} color={COLORS.primary} />
+                                </View>
+                            ) : (
+                                <Image
+                                    source={item.image}
+                                    style={styles.storyImage}
+                                />
+                            )}
+                        </View>
+                        <AppText.body style={styles.storyText} numberOfLines={1}>{item.name}</AppText.body>
+                    </View>
+                )}
+                keyExtractor={(item) => item.id.toString()}
+            />
+        </View>
+    ), []);
+
+    if (loading && posts.length === 0) {
+        return (
+            <View style={[styles.container, styles.centerContent]}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+                <AppText.body style={{ marginTop: vs(10) }}>Fetching your feed...</AppText.body>
             </View>
         );
     }
 
     return (
         <View style={styles.container}>
-            <View style={styles.storyContainer} >
-                <FlatList
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.storyListContent}
-                    data={[{ id: 'yours', name: 'Your Story', image: null }, ...storyData]}
-                    renderItem={({ item, index }) => (
-                        <View style={styles.storyItem}>
-                            <View style={[
-                                styles.storyImageContainer,
-                                item.id !== 'yours' && styles.storyRing
-                            ]}>
-                                {item.id === 'yours' ? (
-                                    <View style={styles.yourStoryPlaceholder}>
-                                        <Ionicons name="add" size={30} color={COLORS.primary} />
-                                    </View>
-                                ) : (
-                                    <Image
-                                        source={item.image}
-                                        style={styles.storyImage}
-                                    />
-                                )}
-                            </View>
-                            <AppText.body style={styles.storyText} numberOfLines={1}>{item.name}</AppText.body>
+            <FlatList
+                data={posts}
+                ListHeaderComponent={renderHeader}
+                renderItem={({ item }) => (
+                    <PostCard
+                        post={item}
+                        onLike={toggleLike}
+                        onComment={(postId) => console.log('Open comments for', postId)}
+                    />
+                )}
+                keyExtractor={(item) => item.id.toString()}
+                contentContainerStyle={styles.feedScrollContent}
+                
+                // Infinite Scroll Props
+                onEndReached={loadMorePosts}
+                onEndReachedThreshold={0.5} // Trigger when half of the last screen is visible
+                ListFooterComponent={renderFooter}
+                
+                // Pull to Refresh
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={fetchPosts}
+                        colors={[COLORS.primary]} // Android
+                        tintColor={COLORS.primary} // iOS
+                    />
+                }
+
+                // Performance Optimizations
+                initialNumToRender={5}
+                maxToRenderPerBatch={5}
+                windowSize={10}
+                removeClippedSubviews={true} // Frees up resources for off-screen items
+                // showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                    !loading && (
+                        <View style={styles.centerContent}>
+                            <AppText.body>No posts found. Start following people!</AppText.body>
                         </View>
-                    )}
-                    keyExtractor={(item) => item.id.toString()}
-                />
-            </View>
-            <View style={styles.feedContent}>
-                <FlatList
-                    data={posts}
-                    renderItem={({ item }) => (
-                        <PostCard
-                            post={item}
-                            onLike={toggleLike}
-                            onComment={(postId) => console.log('Open comments for', postId)}
-                        />
-                    )}
-                    keyExtractor={(item) => item.id.toString()}
-                    contentContainerStyle={{ paddingBottom: vs(20) }}
-                />
-            </View>
+                    )
+                }
+            />
         </View>
     )
 }
@@ -76,8 +128,14 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.background,
     },
+    centerContent: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingTop: vs(50),
+    },
     storyContainer: {
-        marginTop: vs(10),
+        marginTop: vs(5),
         borderBottomWidth: 1,
         borderBottomColor: COLORS.border,
         paddingBottom: vs(10),
@@ -100,7 +158,7 @@ const styles = StyleSheet.create({
         borderColor: 'transparent',
     },
     storyRing: {
-        borderColor: COLORS.secondary,
+        borderColor: COLORS.primary,
         padding: 2,
     },
     yourStoryPlaceholder: {
@@ -125,13 +183,18 @@ const styles = StyleSheet.create({
         marginTop: vs(5),
         textAlign: 'center',
     },
-    feedContent: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+    feedScrollContent: {
+        paddingBottom: vs(20),
     },
-    placeholderText: {
-        color: COLORS.grey,
-        textAlign: 'center',
+    footerLoader: {
+        paddingVertical: vs(20),
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+    loaderText: {
+        marginLeft: s(10),
+        fontSize: ms(13),
+        color: COLORS.subtext,
     }
 })

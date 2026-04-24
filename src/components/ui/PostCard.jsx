@@ -13,10 +13,19 @@ import { COLORS } from "../../utils/theme";
 import CommentsModal from './CommentsModal';
 import auth from "@react-native-firebase/auth";
 
+import { useNavigation } from "@react-navigation/native";
+
 const PostCard = ({ post, onLike, onComment }) => {
     if (!post) return null;
+    const navigation = useNavigation();
     const [commentsVisible, setCommentsVisible] = useState(false);
+    
+    const handleProfilePress = () => {
+        navigation.navigate('Profile', { userId: post.userId });
+    };
+
     const currentUserId = auth().currentUser?.uid;
+    // ... same logic ... (lines 20-27)
     const isLiked = Array.isArray(post.likes) ? post.likes.includes(currentUserId) : false;
     const formatLikes = (count) => {
         if (!count) return 0;
@@ -28,22 +37,22 @@ const PostCard = ({ post, onLike, onComment }) => {
 
     return (
         <View style={styles.card}>
-            {/* Header ... same ... */}
+            {/* Header */}
             <View style={styles.header}>
                 <View style={styles.userInfo}>
-                    <View>
+                    <TouchableOpacity onPress={handleProfilePress}>
                         <Image
                             source={post.userImage ? { uri: post.userImage } : require('../../assets/user.png')}
                             style={styles.avatar}
                         />
-                    </View>
+                    </TouchableOpacity>
 
-                    <View>
+                    <TouchableOpacity onPress={handleProfilePress}>
                         <View style={styles.nameRow}>
                             <Text style={styles.name}>{post.username}</Text>
                         </View>
                         <Text style={styles.time}>{post.createdAt && typeof post.createdAt.toDate === 'function' ? new Date(post.createdAt.toDate()).toLocaleDateString() : 'Just now'}</Text>
-                    </View>
+                    </TouchableOpacity>
                 </View>
 
                 <Ionicons name="ellipsis-horizontal" size={20} color="#666" />

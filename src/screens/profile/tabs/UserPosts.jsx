@@ -10,11 +10,11 @@ import { usePosts } from '../../../hooks/usePosts';
 import auth from '@react-native-firebase/auth';
 import AppText from '../../../components/common/AppText';
 
-const UserPosts = () => {
+const UserPosts = ({ route }) => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const { toggleLike } = usePosts();
-    const userId = auth().currentUser?.uid;
+    const userId = route.params?.userId || auth().currentUser?.uid;
 
     useEffect(() => {
         if (userId) {

@@ -16,9 +16,8 @@ import AppText from './AppText';
 // Brand Theme Colors
 const BRAND_PRIMARY = COLORS.primary;
 const INACTIVE_COLOR = COLORS.subtext;
-const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? vs(90) : vs(70);
-
-const AnimatedAppText = Animated.createAnimatedComponent(AppText.body);
+const TAB_BAR_HEIGHT = ms(65);
+const SAFE_BOTTOM_PADDING = Platform.OS === 'android' ? vs(10) : 0; // Extra breathing room for Android gesture bar
 
 /**
  * Individual Tab Item Component
@@ -102,12 +101,18 @@ const TabItem = React.memo(({ route, isFocused, onPress, label }) => {
 const CustomTabBar = ({ state, descriptors, navigation }) => {
     const insets = useSafeAreaInsets();
 
+    // Standard Tab Bar Height calculation
+    // insets.bottom handles iOS Home Indicator and Android Gesture Bar
+    // We add a small SAFE_BOTTOM_PADDING for Android to ensure labels aren't too close to the edge
+    const bottomPadding = Math.max(insets.bottom, SAFE_BOTTOM_PADDING);
+    const containerHeight = TAB_BAR_HEIGHT + bottomPadding;
+
     return (
         <View style={[
             styles.container,
             {
-                height: TAB_BAR_HEIGHT + insets.bottom,
-                paddingBottom: insets.bottom
+                height: containerHeight,
+                paddingBottom: bottomPadding
             }
         ]}>
             <View style={styles.tabWrapper}>
@@ -122,13 +127,13 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
                             : route.name;
 
                     const handlePress = useCallback(() => {
-                        const event = navigation.emit({
+                        const navigationEvent = navigation.emit({
                             type: 'tabPress',
                             target: route.key,
                             canPreventDefault: true,
                         });
 
-                        if (!isFocused && !event.defaultPrevented) {
+                        if (!isFocused && !navigationEvent.defaultPrevented) {
                             navigation.navigate(route.name);
                         }
                     }, [isFocused, route.key, route.name, navigation]);
@@ -161,15 +166,16 @@ const styles = StyleSheet.create({
                 shadowRadius: 10,
             },
             android: {
-                elevation: 20,
+                elevation: 10,
+                borderTopWidth: 1,
+                borderTopColor: 'rgba(0,0,0,0.05)',
             },
         }),
-        position: 'absolute',
-        bottom: -15,
+        // Avoid using position absolute with negative offsets as it breaks responsiveness
+        position: 'relative', 
+        bottom: 0,
         left: 0,
         right: 0,
-        borderTopWidth: Platform.OS === 'ios' ? 0 : 1,
-        borderTopColor: 'rgba(0,0,0,0.05)',
     },
     tabWrapper: {
         flexDirection: 'row',
@@ -185,7 +191,6 @@ const styles = StyleSheet.create({
     contentContainer: {
         alignItems: 'center',
         justifyContent: 'center',
-
     },
     label: {
         fontSize: ms(12),
