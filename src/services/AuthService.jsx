@@ -21,6 +21,9 @@ export const signUp = async (email, password, name) => {
             email: email,
             avatar: null,
             bio: 'New member at CircleLink',
+            postsCount: 0,
+            followersCount: 0,
+            followingCount: 0,
             createdAt: firestore.FieldValue.serverTimestamp(),
         };
 

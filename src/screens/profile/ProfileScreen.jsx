@@ -1,5 +1,6 @@
-import { Image, StyleSheet, Text, View } from 'react-native'
+import { Image, StyleSheet, Text, View, ActivityIndicator, TouchableOpacity } from 'react-native'
 import React from 'react'
+import auth from '@react-native-firebase/auth';
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import { COLORS } from '../../utils/theme'
@@ -7,21 +8,25 @@ import { ms, s } from '../../utils/responsive'
 
 import StatsRow from '../../components/ui/ProfileInfo'
 import AppText from '../../components/common/AppText'
-import { TouchableOpacity } from 'react-native'
 import ProfileTabs from '../../navigation/ProfileTabs'
 import { useNavigation } from '@react-navigation/native'
 
 
 import { useUser } from '../../hooks/useUser'
+import FollowButton from '../../components/common/FollowButton'
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ route }) => {
     const navigation = useNavigation();
-    const { userData, loading } = useUser();
+    const userId = route.params?.userId || auth().currentUser?.uid;
+    const isOwner = userId === auth().currentUser?.uid;
+
+    const { userData, loading } = useUser(userId);
 
     if (loading) {
         return (
             <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <AppText.body>Loading profile...</AppText.body>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+                <AppText.body style={{ marginTop: 10 }}>Loading profile...</AppText.body>
             </View>
         );
     }
@@ -30,15 +35,22 @@ const ProfileScreen = () => {
         name: 'Guest User',
         username: '@guest',
         bio: 'No bio available',
-        avatar: null
+        avatar: null,
+        postsCount: 0,
+        followersCount: 0,
+        followingCount: 0
     };
 
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <Ionicons name="arrow-back" size={24} color="black" onPress={() => navigation.goBack()} />
-                <Text style={styles.headerTitle}>Profile</Text>
-                <Ionicons name="menu" size={24} color="black" onPress={() => navigation.navigate('Settings')} />
+                <Text style={styles.headerTitle}>{isOwner ? 'My Profile' : user.name}</Text>
+                {isOwner ? (
+                    <Ionicons name="menu" size={24} color="black" onPress={() => navigation.navigate('Settings')} />
+                ) : (
+                    <Ionicons name="ellipsis-vertical" size={24} color="black" onPress={() => { }} />
+                )}
             </View>
 
             <View style={styles.profileTopSection}>
@@ -47,30 +59,48 @@ const ProfileScreen = () => {
                         source={user.avatar ? { uri: user.avatar } : require('../../assets/user.png')}
                         style={styles.profileImage}
                     />
-                    <StatsRow />
+                    <StatsRow 
+                        posts={user.postsCount || 0} 
+                        followers={user.followersCount || 0} 
+                        following={user.followingCount || 0} 
+                    />
                 </View>
 
                 <View style={styles.profileInfo}>
                     <AppText.body style={styles.profileName}>{user.name}</AppText.body>
                     <AppText.body style={styles.profileUsername}>@{user.username || 'user'}</AppText.body>
-                    <AppText.body style={styles.profileBio}>{user.bio}</AppText.body>
+                    <AppText.body style={styles.profileBio}>{user.bio || 'No bio yet'}</AppText.body>
                 </View>
 
                 <View style={styles.profileActions}>
-                    <TouchableOpacity
-                        style={styles.profileActionsButton}
-                        onPress={() => navigation.navigate('EditProfile', { user })}
-                    >
-                        <AppText.body style={styles.profileActionsButtonText}>Edit Profile</AppText.body>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.profileActionsButton}>
-                        <AppText.body style={styles.profileActionsButtonText}>Share Profile</AppText.body>
-                    </TouchableOpacity>
+                    {isOwner ? (
+                        <>
+                            <TouchableOpacity
+                                style={styles.profileActionsButton}
+                                onPress={() => navigation.navigate('EditProfile', { user })}
+                            >
+                                <AppText.body style={styles.profileActionsButtonText}>Edit Profile</AppText.body>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.profileActionsButton}>
+                                <AppText.body style={styles.profileActionsButtonText}>Share Profile</AppText.body>
+                            </TouchableOpacity>
+                        </>
+                    ) : (
+                        <>
+                            <FollowButton targetUserId={userId} style={{ flex: 1, marginRight: 5 }} />
+                            <TouchableOpacity 
+                                style={[styles.profileActionsButton, { flex: 1, marginLeft: 5, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border }]}
+                                onPress={() => { }}
+                            >
+                                <AppText.body style={[styles.profileActionsButtonText, { color: COLORS.text }]}>Message</AppText.body>
+                            </TouchableOpacity>
+                        </>
+                    )}
                 </View>
             </View>
 
             <View style={{ flex: 1 }}>
-                <ProfileTabs />
+                <ProfileTabs userId={userId} />
             </View>
         </SafeAreaView>
     )

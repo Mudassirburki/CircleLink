@@ -100,23 +100,23 @@ export const postData = [
     },
 ];
 
-export const USER_STATS = [
-    {
-        id: 1,
-        label: "Posts",
-        value: "100",
-    },
-    {
-        id: 2,
-        label: "Followers",
-        value: "100",
-    },
-    {
-        id: 3,
-        label: "Following",
-        value: "100",
-    },
-];
+// export const USER_STATS = [
+//     {
+//         id: 1,
+//         label: "Posts",
+//         value: "100",
+//     },
+//     {
+//         id: 2,
+//         label: "Followers",
+//         value: "100",
+//     },
+//     {
+//         id: 3,
+//         label: "Following",
+//         value: "100",
+//     },
+// ];
 
 export const notificationData = [
     {

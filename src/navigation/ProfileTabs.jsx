@@ -9,7 +9,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const Tab = createMaterialTopTabNavigator();
 
-const ProfileTabs = () => {
+const ProfileTabs = ({ userId }) => {
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
@@ -47,11 +47,9 @@ const ProfileTabs = () => {
                 tabBarShowLabel: false,
             })}
         >
-            <Tab.Screen name="Posts" component={UserPosts} />
-            <Tab.Screen name="Liked" component={LikedPosts} />
-            <Tab.Screen name="Saved" component={SavedPosts} />
-
-
+            <Tab.Screen name="Posts" component={UserPosts} initialParams={{ userId }} />
+            <Tab.Screen name="Liked" component={LikedPosts} initialParams={{ userId }} />
+            <Tab.Screen name="Saved" component={SavedPosts} initialParams={{ userId }} />
         </Tab.Navigator>
     );
 };
