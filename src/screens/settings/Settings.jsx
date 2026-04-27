@@ -1,5 +1,5 @@
 import { Alert, FlatList, Image, StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { COLORS } from '../../utils/theme'
 import { ms } from '../../utils/responsive'
@@ -12,11 +12,13 @@ import SettingsCard from '../../components/ui/SettingsCard'
 import { settingsData } from '../../dummyData/Data'
 import { useAuth } from '../../context/AuthContext'
 import { useUser } from '../../hooks/useUser'
+import LogoutModal from '../../components/ui/LogoutModal'
 
 const Settings = () => {
     const navigation = useNavigation();
     const { logout } = useAuth();
     const { userData } = useUser();
+    const [isLogoutModalVisible, setLogoutModalVisible] = useState(false);
 
     const user = userData || {
         name: 'Guest User',
@@ -26,23 +28,9 @@ const Settings = () => {
     }
 
     const handleLogout = () => {
-        logout();
-        // Alert.alert(
-        //     "Logout",
-        //     "Are you sure you want to logout?",
-        //     [
-        //         {
-        //             text: "Cancel",
-        //             style: "cancel"
-        //         },
-        //         {
-        //             text: "Logout",
-        //             style: "destructive",
-        //             onPress: logout
-        //         }
-        //     ]
-        // );
+        setLogoutModalVisible(true);
     }
+
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
             <View style={styles.container}>
@@ -98,6 +86,11 @@ const Settings = () => {
                     keyExtractor={(item) => item.id}
                 />
             </View>
+            <LogoutModal
+                isVisible={isLogoutModalVisible}
+                onClose={() => setLogoutModalVisible(false)}
+                onLogout={logout}
+            />
         </SafeAreaView>
     )
 }
