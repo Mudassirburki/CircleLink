@@ -15,8 +15,11 @@ import { useNavigation } from '@react-navigation/native'
 import { useUser } from '../../hooks/useUser'
 import FollowButton from '../../components/common/FollowButton'
 
+import { useTheme } from '../../context/ThemeContext'
+
 const ProfileScreen = ({ route }) => {
     const navigation = useNavigation();
+    const { theme } = useTheme();
     const userId = route.params?.userId || auth().currentUser?.uid;
     const isOwner = userId === auth().currentUser?.uid;
 
@@ -24,9 +27,9 @@ const ProfileScreen = ({ route }) => {
 
     if (loading) {
         return (
-            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-                <AppText.body style={{ marginTop: 10 }}>Loading profile...</AppText.body>
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }]}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <AppText.body style={{ marginTop: 10, color: theme.colors.text }}>Loading profile...</AppText.body>
             </View>
         );
     }
@@ -42,14 +45,14 @@ const ProfileScreen = ({ route }) => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <View style={styles.header}>
-                <Ionicons name="arrow-back" size={24} color="black" onPress={() => navigation.goBack()} />
-                <Text style={styles.headerTitle}>{isOwner ? 'My Profile' : user.name}</Text>
+                <Ionicons name="arrow-back" size={24} color={theme.colors.text} onPress={() => navigation.goBack()} />
+                <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{isOwner ? 'My Profile' : user.name}</Text>
                 {isOwner ? (
-                    <Ionicons name="menu" size={24} color="black" onPress={() => navigation.navigate('Settings')} />
+                    <Ionicons name="menu" size={24} color={theme.colors.text} onPress={() => navigation.navigate('Settings')} />
                 ) : (
-                    <Ionicons name="ellipsis-vertical" size={24} color="black" onPress={() => { }} />
+                    <Ionicons name="ellipsis-vertical" size={24} color={theme.colors.text} onPress={() => { }} />
                 )}
             </View>
 
@@ -59,40 +62,40 @@ const ProfileScreen = ({ route }) => {
                         source={user.avatar ? { uri: user.avatar } : require('../../assets/user.png')}
                         style={styles.profileImage}
                     />
-                    <StatsRow 
-                        posts={user.postsCount || 0} 
-                        followers={user.followersCount || 0} 
-                        following={user.followingCount || 0} 
+                    <StatsRow
+                        posts={user.postsCount || 0}
+                        followers={user.followersCount || 0}
+                        following={user.followingCount || 0}
                     />
                 </View>
 
                 <View style={styles.profileInfo}>
-                    <AppText.body style={styles.profileName}>{user.name}</AppText.body>
-                    <AppText.body style={styles.profileUsername}>@{user.username || 'user'}</AppText.body>
-                    <AppText.body style={styles.profileBio}>{user.bio || 'No bio yet'}</AppText.body>
+                    <AppText.body style={[styles.profileName, { color: theme.colors.text }]}>{user.name}</AppText.body>
+                    <AppText.body style={[styles.profileUsername, { color: theme.colors.subtext }]}>@{user.username || 'user'}</AppText.body>
+                    <AppText.body style={[styles.profileBio, { color: theme.colors.text }]}>{user.bio || 'No bio yet'}</AppText.body>
                 </View>
 
                 <View style={styles.profileActions}>
                     {isOwner ? (
                         <>
                             <TouchableOpacity
-                                style={styles.profileActionsButton}
+                                style={[styles.profileActionsButton, { backgroundColor: theme.colors.primary }]}
                                 onPress={() => navigation.navigate('EditProfile', { user })}
                             >
-                                <AppText.body style={styles.profileActionsButtonText}>Edit Profile</AppText.body>
+                                <AppText.body style={[styles.profileActionsButtonText, { color: '#fff' }]}>Edit Profile</AppText.body>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.profileActionsButton}>
-                                <AppText.body style={styles.profileActionsButtonText}>Share Profile</AppText.body>
+                            <TouchableOpacity style={[styles.profileActionsButton, { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }]}>
+                                <AppText.body style={[styles.profileActionsButtonText, { color: theme.colors.text }]}>Share Profile</AppText.body>
                             </TouchableOpacity>
                         </>
                     ) : (
                         <>
                             <FollowButton targetUserId={userId} style={{ flex: 1, marginRight: 5 }} />
-                            <TouchableOpacity 
-                                style={[styles.profileActionsButton, { flex: 1, marginLeft: 5, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border }]}
+                            <TouchableOpacity
+                                style={[styles.profileActionsButton, { flex: 1, marginLeft: 5, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }]}
                                 onPress={() => { }}
                             >
-                                <AppText.body style={[styles.profileActionsButtonText, { color: COLORS.text }]}>Message</AppText.body>
+                                <AppText.body style={[styles.profileActionsButtonText, { color: theme.colors.text }]}>Message</AppText.body>
                             </TouchableOpacity>
                         </>
                     )}
@@ -105,8 +108,6 @@ const ProfileScreen = ({ route }) => {
         </SafeAreaView>
     )
 }
-
-
 
 export default ProfileScreen
 

@@ -9,11 +9,13 @@ import { getUserPosts } from '../../../services/PostService';
 import { usePosts } from '../../../hooks/usePosts';
 import auth from '@react-native-firebase/auth';
 import AppText from '../../../components/common/AppText';
+import { useTheme } from '../../../context/ThemeContext';
 
 const UserPosts = ({ route }) => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { toggleLike } = usePosts();
+    const { toggleLike, toggleSave } = usePosts();
+    const { theme } = useTheme();
     const userId = route.params?.userId || auth().currentUser?.uid;
 
     useEffect(() => {
@@ -40,7 +42,7 @@ const UserPosts = ({ route }) => {
     );
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <FlatList
                 data={posts}
                 keyExtractor={(item) => item.id.toString()}
@@ -48,6 +50,7 @@ const UserPosts = ({ route }) => {
                     <PostCard
                         post={item}
                         onLike={toggleLike}
+                        onSave={toggleSave}
                         onComment={(postId) => console.log('Open comments for', postId)}
                     />
                 )}

@@ -1,7 +1,7 @@
 import { StyleSheet, View } from "react-native";
-import AppText from "../common/AppText";
-import { USER_STATS } from "../../dummyData/Data";
+import { useTheme } from "../../context/ThemeContext";
 import { ms } from "../../utils/responsive";
+import AppText from "../common/AppText";
 
 const StatsRow = ({ posts = 0, followers = 0, following = 0 }) => {
     return (
@@ -14,10 +14,11 @@ const StatsRow = ({ posts = 0, followers = 0, following = 0 }) => {
 }
 
 const StatItem = ({ label, value }) => {
+    const { theme } = useTheme();
     return (
         <View style={styles.statItem}>
             <AppText.body style={styles.statValue}>{value}</AppText.body>
-            <AppText.body style={styles.statLabel}>{label}</AppText.body>
+            <AppText.body style={[styles.statLabel, { color: theme.colors.subtext }]}>{label}</AppText.body>
         </View>
     )
 }
@@ -41,6 +42,5 @@ const styles = StyleSheet.create({
     },
     statLabel: {
         fontSize: ms(14),
-        color: "gray",
     }
 })

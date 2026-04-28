@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, StyleSheet, FlatList, TextInput, TouchableOpacity, Image } from 'react-native';
+import { View, TouchableOpacity, Modal, FlatList, Image, TextInput, StyleSheet } from 'react-native';
+import Animated, { FadeIn, SlideInDown, FadeOut } from 'react-native-reanimated';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { getComments, addComment } from '../../services/PostService';
-import { COLORS } from '../../utils/theme';
-import { ms, s, vs } from '../../utils/responsive';
 import AppText from '../common/AppText';
+import { useTheme } from '../../context/ThemeContext';
+
+import { ms, s, vs } from '../../utils/responsive';
+import { getComments, addComment } from '../../services/PostService';
+
 
 const CommentsModal = ({ visible, onClose, postId }) => {
     const [comments, setComments] = useState([]);
     const [text, setText] = useState('');
     const [loading, setLoading] = useState(false);
+    const { theme } = useTheme();
 
     useEffect(() => {
         if (visible && postId) {
@@ -32,13 +36,17 @@ const CommentsModal = ({ visible, onClose, postId }) => {
     };
 
     return (
-        <Modal visible={visible} animationType="slide" transparent>
-            <View style={styles.container}>
-                <View style={styles.content}>
-                    <View style={styles.header}>
-                        <AppText.body style={styles.title}>Comments</AppText.body>
+        <Modal visible={visible} animationType="none" transparent>
+            <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.container}>
+                <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
+                <Animated.View
+                    entering={SlideInDown.springify().damping(15)}
+                    style={[styles.content, { backgroundColor: theme.colors.surface }]}
+                >
+                    <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
+                        <AppText.body style={[styles.title, { color: theme.colors.text }]}>Comments</AppText.body>
                         <TouchableOpacity onPress={onClose}>
-                            <Ionicons name="close" size={24} color={COLORS.text} />
+                            <Ionicons name="close" size={24} color={theme.colors.text} />
                         </TouchableOpacity>
                     </View>
 
@@ -47,36 +55,37 @@ const CommentsModal = ({ visible, onClose, postId }) => {
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
                             <View style={styles.commentItem}>
-                                <Image 
-                                    source={item.userImage ? { uri: item.userImage } : require('../../assets/Mb.jpeg')} 
-                                    style={styles.avatar} 
+                                <Image
+                                    source={item.userImage ? { uri: item.userImage } : require('../../assets/Mb.jpeg')}
+                                    style={styles.avatar}
                                 />
                                 <View style={styles.commentContent}>
-                                    <AppText.body style={styles.username}>{item.username}</AppText.body>
-                                    <AppText.body style={styles.text}>{item.text}</AppText.body>
+                                    <AppText.body style={[styles.username, { color: theme.colors.text }]}>{item.username}</AppText.body>
+                                    <AppText.body style={[styles.text, { color: theme.colors.text }]}>{item.text}</AppText.body>
                                 </View>
                             </View>
                         )}
                         contentContainerStyle={styles.list}
                         ListEmptyComponent={() => (
-                            <AppText.body style={styles.empty}>No comments yet.</AppText.body>
+                            <AppText.body style={[styles.empty, { color: theme.colors.subtext }]}>No comments yet.</AppText.body>
                         )}
                     />
 
-                    <View style={styles.footer}>
+                    <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { backgroundColor: theme.colors.background, color: theme.colors.text }]}
                             placeholder="Add a comment..."
+                            placeholderTextColor={theme.colors.subtext}
                             value={text}
                             onChangeText={setText}
                             multiline
                         />
                         <TouchableOpacity onPress={handleSend} disabled={loading}>
-                            <Ionicons name="send" size={24} color={text.trim() ? COLORS.secondary : COLORS.grey} />
+                            <Ionicons name="send" size={24} color={text.trim() ? theme.colors.primary : theme.colors.subtext} />
                         </TouchableOpacity>
                     </View>
-                </View>
-            </View>
+                </Animated.View>
+            </Animated.View>
         </Modal>
     );
 };
@@ -90,7 +99,6 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     content: {
-        backgroundColor: COLORS.background,
         height: '80%',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
@@ -128,19 +136,16 @@ const styles = StyleSheet.create({
     },
     text: {
         fontSize: ms(14),
-        color: COLORS.text,
     },
     footer: {
         flexDirection: 'row',
         alignItems: 'center',
         borderTopWidth: 1,
-        borderTopColor: COLORS.border,
         paddingTop: vs(10),
         gap: s(10),
     },
     input: {
         flex: 1,
-        backgroundColor: COLORS.surface,
         borderRadius: 20,
         paddingHorizontal: s(15),
         paddingVertical: vs(8),
@@ -149,6 +154,5 @@ const styles = StyleSheet.create({
     empty: {
         textAlign: 'center',
         marginTop: vs(50),
-        color: COLORS.grey,
     },
 });

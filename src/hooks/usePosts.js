@@ -3,8 +3,11 @@ import {
     getPaginatedPosts, 
     createPost as createPostService, 
     toggleLike as toggleLikeService, 
-    addComment as addCommentService 
+    addComment as addCommentService,
+    toggleSavePost
 } from '../services/PostService';
+
+import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
 const PAGE_SIZE = 5;
@@ -45,6 +48,39 @@ export const usePosts = () => {
             isFetching.current = false;
         }
     }, []);
+
+    // Real-time listener for current posts in state
+    useEffect(() => {
+        const postIds = posts.map(p => p.id);
+        if (postIds.length === 0) return;
+
+        // Note: Real-time updates for counts only? 
+        // A single snapshot for all visible posts is hard with Firestore query limits.
+        // Instead, we rely on individual post updates or a limited set.
+        // For 'Circle Link', let's just use the onSnapshot(query) pattern for the top posts.
+        const unsubscribe = firestore()
+            .collection('posts')
+            .orderBy('createdAt', 'desc')
+            .limit(posts.length || PAGE_SIZE)
+            .onSnapshot(snapshot => {
+                if (snapshot) {
+                    const updatedPosts = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    // Merge with current state to preserve pagination logic if needed
+                    // For now, replacing with fresh data for common fields
+                    setPosts(prev => {
+                        return updatedPosts.map(up => {
+                            const existing = prev.find(p => p.id === up.id);
+                            return existing ? { ...existing, ...up } : up;
+                        });
+                    });
+                }
+            });
+
+        return () => unsubscribe();
+    }, [posts.length]); // Only re-subscribe if the number of posts changes (pagination)
 
     const loadMorePosts = useCallback(async () => {
         if (isFetching.current || !hasMore || loadingMore) return;
@@ -109,7 +145,32 @@ export const usePosts = () => {
         }
     }, []);
 
+    const toggleSave = useCallback(async (postId, isSaved) => {
+        const userId = auth().currentUser?.uid;
+        if (!userId) return;
+
+        // Optimistic UI update
+        setPosts(prevPosts => prevPosts.map(post => {
+            if (post.id === postId) {
+                const currentSavedBy = post.savedBy || [];
+                const newSavedBy = isSaved 
+                    ? currentSavedBy.filter(id => id !== userId)
+                    : [...currentSavedBy, userId];
+                return { ...post, savedBy: newSavedBy };
+            }
+            return post;
+        }));
+
+        try {
+            await toggleSavePost(postId, userId, isSaved);
+        } catch (error) {
+            console.error('Error toggling save:', error);
+            // Rollback if needed
+        }
+    }, []);
+
     const addComment = useCallback(async (postId, text) => {
+
         try {
             await addCommentService(postId, text);
         } catch (error) {
@@ -128,6 +189,7 @@ export const usePosts = () => {
         loadMorePosts,
         createPost,
         toggleLike,
+        toggleSave,
         addComment,
     };
 };

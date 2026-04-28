@@ -12,10 +12,14 @@ import { useUser } from '../../hooks/useUser'
 import { usePosts } from '../../hooks/usePosts'
 import { useState } from 'react'
 
+import { useTheme } from '../../context/ThemeContext'
+import { TouchableOpacity } from 'react-native'
+
 const ExploreScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const { searchUsers, searchResults, searchLoading } = useUser();
     const { posts, loading: postsLoading } = usePosts();
+    const { theme } = useTheme();
 
     const handleSearch = (text) => {
         setSearchQuery(text);
@@ -23,14 +27,14 @@ const ExploreScreen = () => {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
             <View style={styles.container}>
-                <View style={styles.searchBar}>
-                    <Ionicons name="search" size={ms(20)} color={COLORS.text} />
+                <View style={[styles.searchBar, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+                    <Ionicons name="search" size={ms(20)} color={theme.colors.subtext} />
                     <TextInput
                         placeholder="Search users..."
-                        placeholderTextColor={COLORS.text}
-                        style={styles.searchInput}
+                        placeholderTextColor={theme.colors.subtext}
+                        style={[styles.searchInput, { color: theme.colors.text }]}
                         value={searchQuery}
                         onChangeText={handleSearch}
                     />
@@ -42,18 +46,18 @@ const ExploreScreen = () => {
                             data={searchResults}
                             keyExtractor={(item) => item.id}
                             renderItem={({ item }) => (
-                                <TouchableOpacity style={styles.userItem}>
+                                <TouchableOpacity style={[styles.userItem, { borderBottomColor: theme.colors.border }]}>
                                     <View style={styles.userAvatarContainer}>
-                                        <Ionicons name="person-circle" size={ms(40)} color={COLORS.grey} />
+                                        <Ionicons name="person-circle" size={ms(40)} color={theme.colors.subtext} />
                                     </View>
                                     <View>
-                                        <AppText.body style={styles.userName}>{item.name}</AppText.body>
-                                        <AppText.body style={styles.userBio} numberOfLines={1}>{item.bio}</AppText.body>
+                                        <AppText.body style={[styles.userName, { color: theme.colors.text }]}>{item.name}</AppText.body>
+                                        <AppText.body style={[styles.userBio, { color: theme.colors.subtext }]} numberOfLines={1}>{item.bio || 'No bio yet'}</AppText.body>
                                     </View>
                                 </TouchableOpacity>
                             )}
                             ListEmptyComponent={() => (
-                                <AppText.body style={styles.emptyText}>No users found</AppText.body>
+                                <AppText.body style={[styles.emptyText, { color: theme.colors.subtext }]}>No users found</AppText.body>
                             )}
                         />
                     ) : (

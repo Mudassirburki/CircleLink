@@ -7,35 +7,34 @@ import Ionicons from 'react-native-vector-icons/Ionicons'
 import { useNavigation } from '@react-navigation/native'
 import { TouchableOpacity } from 'react-native'
 
-const SettingsCard = ({ icon, title, subtitle, type, route, color, onPress }) => {
-    const navigation = useNavigation();
-    const [isEnabled, setIsEnabled] = useState(false);
-    const toggleSwitch = () => setIsEnabled(previousState => !previousState);
+import { useTheme } from '../../context/ThemeContext';
+
+const SettingsCard = ({ icon, title, subtitle, type, route, color, value, onValueChange, onPress }) => {
+    const { theme } = useTheme();
 
     return (
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             <View style={styles.left}>
-                <View style={styles.icon}>
-                    <Ionicons name={icon} size={24} color={color} />
+                <View style={[styles.icon, { backgroundColor: theme.colors.background }]}>
+                    <Ionicons name={icon} size={24} color={color || theme.colors.text} />
                 </View>
                 <View style={styles.info}>
-                    <AppText.body style={styles.title}>{title}</AppText.body>
-                    <AppText.body style={styles.subtitle}>{subtitle}</AppText.body>
+                    <AppText.body style={[styles.title, { color: theme.colors.text }]}>{title}</AppText.body>
+                    <AppText.body style={[styles.subtitle, { color: theme.colors.subtext }]}>{subtitle}</AppText.body>
                 </View>
             </View>
             <View style={styles.right}>
                 {type === 'toggle' ? (
                     <Switch
-                        trackColor={{ false: '#767577', true: COLORS.primary }}
-                        thumbColor={isEnabled ? COLORS.white : '#f4f3f4'}
+                        trackColor={{ false: '#767577', true: theme.colors.primary }}
+                        thumbColor={value ? theme.colors.primary : '#f4f3f4'}
                         ios_backgroundColor="#3e3e3e"
-                        onValueChange={toggleSwitch}
-                        value={isEnabled}
-                        onPress={onPress}
+                        onValueChange={onValueChange}
+                        value={value}
                     />
                 ) : (
                     <TouchableOpacity onPress={onPress}>
-                        <Ionicons name="chevron-forward-outline" size={24} color={COLORS.text} />
+                        <Ionicons name="chevron-forward-outline" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 )}
             </View>

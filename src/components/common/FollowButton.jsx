@@ -1,12 +1,12 @@
-import React from 'react';
-import { TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import AppText from './AppText';
-import { COLORS } from '../../utils/theme';
+import { StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useTheme } from '../../context/ThemeContext';
 import { ms } from '../../utils/responsive';
+import AppText from './AppText';
 import { useFollow } from '../../hooks/useFollow';
 
 const FollowButton = ({ targetUserId, style }) => {
     const { isFollowing, loading, actionLoading, toggleFollow } = useFollow(targetUserId);
+    const { theme } = useTheme();
 
     if (loading) return null;
 
@@ -14,18 +14,20 @@ const FollowButton = ({ targetUserId, style }) => {
         <TouchableOpacity
             style={[
                 styles.button,
-                isFollowing ? styles.followingButton : styles.followButton,
+                isFollowing
+                    ? { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }
+                    : { backgroundColor: theme.colors.primary },
                 style
             ]}
             onPress={toggleFollow}
             disabled={actionLoading}
         >
             {actionLoading ? (
-                <ActivityIndicator size="small" color={isFollowing ? COLORS.text : COLORS.surface} />
+                <ActivityIndicator size="small" color={isFollowing ? theme.colors.text : '#fff'} />
             ) : (
                 <AppText.body style={[
                     styles.text,
-                    isFollowing ? styles.followingText : styles.followText
+                    { color: isFollowing ? theme.colors.text : '#fff' }
                 ]}>
                     {isFollowing ? 'Following' : 'Follow'}
                 </AppText.body>
@@ -45,22 +47,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         minWidth: ms(120),
     },
-    followButton: {
-        backgroundColor: COLORS.primary,
-    },
-    followingButton: {
-        backgroundColor: COLORS.surface,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-    },
     text: {
         fontSize: ms(14),
         fontWeight: 'bold',
-    },
-    followText: {
-        color: COLORS.surface,
-    },
-    followingText: {
-        color: COLORS.text,
     },
 });

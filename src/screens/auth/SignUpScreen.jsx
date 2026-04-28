@@ -6,81 +6,81 @@ import Input from '../../components/common/Input'
 import Button, { SocialButton } from '../../components/common/Button'
 import { s, vs, ms } from '../../utils/responsive'
 import { useNavigation } from '@react-navigation/native'
-import { signUp, signIn } from '../../services/AuthService'
+import { signUp } from '../../services/AuthService'
+import { useTheme } from '../../context/ThemeContext'
 
-const SignUp = () => {
-
+const SignUpScreen = () => {
+    const navigation = useNavigation();
+    const { theme } = useTheme();
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [name, setName] = useState('');
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleSignUp = async () => {
-        if (!email || !password) {
+        if (!name || !email || !password) {
             Alert.alert("Error", "Please fill all fields");
             return;
         }
-
         setLoading(true);
         try {
             await signUp(email, password, name);
-            // navigation.navigate('MainTabs'); // Handled by RootNavigator
         } catch (error) {
-            Alert.alert("Login Failed", error.message);
+            Alert.alert("Sign Up Failed", error.message);
         } finally {
             setLoading(false);
         }
     };
-    const navigation = useNavigation();
+
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <View style={styles.header}>
-                <AppText.h1 style={styles.title}>CircleLink</AppText.h1>
-                <AppText.h2 style={styles.subtitle}>Create Account</AppText.h2>
-                <AppText.small style={styles.subtitle}>Please enter your details to create an account</AppText.small>
+                <AppText.h1 style={[styles.title, { color: theme.colors.primary }]}>CircleLink</AppText.h1>
+                <AppText.body style={[styles.subtitle, { color: theme.colors.subtext }]}>Create your account</AppText.body>
             </View>
 
             <View style={styles.form}>
-                <Input value={name} onChangeText={setName} placeholder="Name" icon="person-outline" />
-                <Input value={email} onChangeText={setEmail} placeholder="Email" icon="mail-outline" />
-                <Input value={password} onChangeText={setPassword} placeholder="Password" icon="lock-closed-outline" secureTextEntry />
-
-
-
-                <Button title="Sign Up" onPress={handleSignUp} />
-            </View>
-
-            <View style={styles.dividerContainer}>
-                <View style={styles.divider} />
-                <AppText.small style={styles.dividerText}>Or Continue with</AppText.small>
-                <View style={styles.divider} />
-            </View>
-
-            <View style={styles.socialContainer}>
-                <SocialButton
-                    title="Continue with Google"
-                    iconType="google"
-                    onPress={() => { }}
+                <Input
+                    placeholder="Full Name"
+                    icon="person-outline"
+                    value={name}
+                    onChangeText={setName}
                 />
+                <Input
+                    placeholder="Email"
+                    icon="mail-outline"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                />
+                <Input
+                    placeholder="Password"
+                    icon="lock-closed-outline"
+                    secureTextEntry
+                    value={password}
+                    onChangeText={setPassword}
+                />
+
+                <Button title="Sign Up" onPress={handleSignUp} loading={loading} />
             </View>
+
             <View style={styles.footer}>
-                <AppText.body>Already have an account? </AppText.body>
-                <TouchableOpacity onPress={() => navigation.navigate('LoginScreen')}>
-                    <AppText.body style={styles.footerText}>Login</AppText.body>
+                <AppText.body style={{ color: theme.colors.text }}>Already have an account? </AppText.body>
+                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                    <AppText.body style={[styles.footerText, { color: theme.colors.primary }]}>Login</AppText.body>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
     )
 }
 
-export default SignUp
+export default SignUpScreen
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: 'center',
-        backgroundColor: '#fff',
         paddingHorizontal: s(20),
     },
     header: {
@@ -91,31 +91,14 @@ const styles = StyleSheet.create({
     title: {
         fontSize: ms(32),
         fontWeight: 'bold',
-        color: '#AF1A5D',
     },
     subtitle: {
         fontSize: ms(16),
-        color: '#666',
         marginTop: vs(5),
     },
     form: {
         width: '100%',
         alignItems: 'center',
-    },
-    forgotPassword: {
-        alignSelf: 'flex-end',
-        marginRight: '5%',
-        marginBottom: vs(20),
-    },
-    forgotPasswordText: {
-        color: '#AF1A5D',
-        fontWeight: '600',
-    },
-    dividerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: vs(30),
-        width: '90%',
     },
     divider: {
         flex: 1,

@@ -14,12 +14,15 @@ import { usePosts } from '../../hooks/usePosts'
 import { useNavigation } from '@react-navigation/native'
 import { useUser } from '../../hooks/useUser'
 
+import { useTheme } from '../../context/ThemeContext'
+
 const PostScreen = () => {
     const [caption, setCaption] = useState('');
     const [imageUri, setImageUri] = useState(null);
     const { createPost, uploading } = usePosts();
     const navigation = useNavigation();
     const { userData } = useUser();
+    const { theme } = useTheme();
 
     const user = userData || {
         name: 'Guest User',
@@ -53,37 +56,41 @@ const PostScreen = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Ionicons name="arrow-back" size={24} color={"#000"} />
+                    <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
-                <AppText.body style={styles.title}>New Post</AppText.body>
+                <AppText.body style={[styles.title, { color: theme.colors.text }]}>New Post</AppText.body>
                 <TouchableOpacity
-                    style={[styles.postButton, uploading && { opacity: 0.5 }]}
+                    style={[styles.postButton, { backgroundColor: theme.colors.primary }, uploading && { opacity: 0.5 }]}
                     onPress={handlePost}
                     disabled={uploading}
                 >
-                    <AppText.body style={styles.postButtonText}>
+                    <AppText.body style={[styles.postButtonText, { color: '#fff' }]}>
                         {uploading ? 'Posting...' : 'Post'}
                     </AppText.body>
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
 
             <View style={styles.postContainer}>
                 <View style={styles.profileContainer}>
-                    <Image source={require('../../assets/user.png')} style={styles.profileImage} />
+                    <Image
+                        source={user.avatar ? { uri: user.avatar } : require('../../assets/user.png')}
+                        style={[styles.profileImage, { backgroundColor: theme.colors.surface }]}
+                    />
                     <View style={styles.profileInfo}>
-                        <AppText.body style={styles.profileName}>{user.name}</AppText.body>
-                        <AppText.body style={styles.profileUsername}>{user.username}</AppText.body>
+                        <AppText.body style={[styles.profileName, { color: theme.colors.text }]}>{user.name}</AppText.body>
+                        <AppText.body style={[styles.profileUsername, { color: theme.colors.subtext }]}>{user.username}</AppText.body>
                     </View>
                 </View>
 
                 <TextInput
-                    style={styles.postInput}
+                    style={[styles.postInput, { color: theme.colors.text }]}
                     placeholder="What's on your mind?"
+                    placeholderTextColor={theme.colors.subtext}
                     multiline
                     value={caption}
                     onChangeText={setCaption}
@@ -100,10 +107,9 @@ const PostScreen = () => {
 
                 <View style={styles.postOptions}>
                     <TouchableOpacity style={styles.postOption} onPress={handlePickImage}>
-                        <Ionicons name="image" size={24} color={COLORS.primary} />
-                        <AppText.body style={styles.postOptionText}>Image</AppText.body>
+                        <Ionicons name="image" size={24} color={theme.colors.primary} />
+                        <AppText.body style={[styles.postOptionText, { color: theme.colors.subtext }]}>Image</AppText.body>
                     </TouchableOpacity>
-                    {/* ... other options ... */}
                 </View>
             </View>
         </SafeAreaView>

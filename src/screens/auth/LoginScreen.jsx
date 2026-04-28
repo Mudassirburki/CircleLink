@@ -9,12 +9,14 @@ import { useNavigation } from '@react-navigation/native'
 import { signIn } from '../../services/AuthService'
 
 
+import { useTheme } from '../../context/ThemeContext'
+
 const LoginScreen = () => {
     const navigation = useNavigation();
+    const { theme } = useTheme();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -25,7 +27,6 @@ const LoginScreen = () => {
         setLoading(true);
         try {
             await signIn(email, password);
-            // navigation.navigate('MainTabs'); // Handled by RootNavigator
         } catch (error) {
             Alert.alert("Login Failed", error.message);
         } finally {
@@ -34,10 +35,10 @@ const LoginScreen = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <View style={styles.header}>
-                <AppText.h1 style={styles.title}>CircleLink</AppText.h1>
-                <AppText.body style={styles.subtitle}>Welcome Back</AppText.body>
+                <AppText.h1 style={[styles.title, { color: theme.colors.primary }]}>CircleLink</AppText.h1>
+                <AppText.body style={[styles.subtitle, { color: theme.colors.subtext }]}>Welcome Back</AppText.body>
             </View>
 
             <View style={styles.form}>
@@ -58,16 +59,16 @@ const LoginScreen = () => {
                 />
 
                 <TouchableOpacity style={styles.forgotPassword} onPress={() => navigation.navigate('ForgotScreen')}>
-                    <AppText.small style={styles.forgotPasswordText}>Forgot Password?</AppText.small>
+                    <AppText.small style={[styles.forgotPasswordText, { color: theme.colors.primary }]}>Forgot Password?</AppText.small>
                 </TouchableOpacity>
 
                 <Button title="Login" onPress={handleLogin} loading={loading} />
             </View>
 
             <View style={styles.dividerContainer}>
-                <View style={styles.divider} />
-                <AppText.small style={styles.dividerText}>Or Continue with</AppText.small>
-                <View style={styles.divider} />
+                <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+                <AppText.small style={[styles.dividerText, { color: theme.colors.subtext }]}>Or Continue with</AppText.small>
+                <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
             </View>
 
             <View style={styles.socialContainer}>
@@ -78,9 +79,9 @@ const LoginScreen = () => {
                 />
             </View>
             <View style={styles.footer}>
-                <AppText.body>Don't have an account? </AppText.body>
+                <AppText.body style={{ color: theme.colors.text }}>Don't have an account? </AppText.body>
                 <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-                    <AppText.body style={styles.footerText}>Sign Up</AppText.body>
+                    <AppText.body style={[styles.footerText, { color: theme.colors.primary }]}>Sign Up</AppText.body>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
@@ -93,7 +94,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: 'center',
-        backgroundColor: '#fff',
         paddingHorizontal: s(20),
     },
     header: {
@@ -104,11 +104,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: ms(32),
         fontWeight: 'bold',
-        color: '#AF1A5D',
     },
     subtitle: {
         fontSize: ms(16),
-        color: '#666',
         marginTop: vs(5),
     },
     form: {
@@ -121,7 +119,6 @@ const styles = StyleSheet.create({
         marginBottom: vs(20),
     },
     forgotPasswordText: {
-        color: '#AF1A5D',
         fontWeight: '600',
     },
     dividerContainer: {
@@ -132,12 +129,10 @@ const styles = StyleSheet.create({
     },
     divider: {
         flex: 1,
-        height: 1,
-        backgroundColor: '#E5E5EA',
+        height: 1.5,
     },
     dividerText: {
         marginHorizontal: s(10),
-        color: '#999',
     },
     socialContainer: {
         width: '100%',
@@ -149,7 +144,6 @@ const styles = StyleSheet.create({
         marginTop: vs(20),
     },
     footerText: {
-        color: '#AF1A5D',
         fontWeight: '600',
     },
 })

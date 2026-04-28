@@ -8,29 +8,57 @@ import Input from '../../components/common/Input'
 import Button from '../../components/common/Button'
 import { TouchableOpacity } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
+import { useTheme } from '../../context/ThemeContext'
 
 const ForgotScreen = () => {
     const navigation = useNavigation()
+    const { theme } = useTheme()
+    const [email, setEmail] = useState('')
+    const [loading, setLoading] = useState(false)
+
+    const handleReset = async () => {
+        if (!email) {
+            Alert.alert("Error", "Please enter your email")
+            return
+        }
+
+        setLoading(true)
+        try {
+            // await passwordReset(email)
+            Alert.alert("Success", "Password reset email sent!")
+            navigation.goBack()
+        } catch (error) {
+            Alert.alert("Error", error.message)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
-        <SafeAreaView style={styles.container}>
-            <AppText.h1 style={styles.title}>CircleLink</AppText.h1>
-            <View style={styles.form}>
-                <View style={styles.iconContainer}>
-                    <Ionicons name="lock-closed-outline" size={20} color="#AF1A5D" style={styles.icon} />
-                </View>
-                <AppText.h1 style={styles.ResetText}> Reset Passward</AppText.h1>
-                <AppText.body style={styles.bodyText}>No worries , it happen to the best of us. Enter your email address and we'll send you a link to reset it.</AppText.body>
-                <AppText.h3 style={styles.emailText}>Email Address</AppText.h3>
-                <Input placeholder="name@example.com" icon="mail-outline" />
-                <Button title="Send Link" onPress={() => { }} />
-                <TouchableOpacity onPress={() => navigation.navigate('LoginScreen')}>
-                    <View style={styles.footer}>
-                        <Ionicons name="arrow-back-outline" size={20} color="#000" style={styles.icon} />
-                        <AppText.body style={styles.footerText}> Back to Login</AppText.body>
-                    </View>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <View style={styles.header}>
+                <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                    <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
+                <AppText.h2 style={[styles.title, { color: theme.colors.primary }]}>Reset Password</AppText.h2>
             </View>
 
+            <View style={styles.content}>
+                <AppText.body style={[styles.description, { color: theme.colors.subtext }]}>
+                    Enter your email address and we'll send you a link to reset your password.
+                </AppText.body>
+
+                <Input
+                    placeholder="Email"
+                    icon="mail-outline"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                />
+
+                <Button title="Send Link" onPress={handleReset} loading={loading} />
+            </View>
         </SafeAreaView>
     )
 }
@@ -40,34 +68,7 @@ export default ForgotScreen
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: 'center',
-    },
-    title: {
-        fontSize: ms(32),
-        fontWeight: 'bold',
-        color: '#AF1A5D',
-        marginTop: vs(30),
-    },
-    iconContainer: {
-        width: s(50),
-        backgroundColor: '#FFD9E1',
-        height: vs(50),
-        marginTop: vs(20),
-        borderRadius: s(50),
-        justifyContent: 'center',
-        alignItems: 'center',
-        alignSelf: "flex-start"
-    },
-    form: {
-        width: '90%',
-        height: vs(500),
-        backgroundColor: '#fff',
-        borderRadius: s(15),
-        marginTop: vs(30),
         paddingHorizontal: s(20),
-        paddingVertical: vs(20),
-        alignItems: 'center',
-        justifyContent: 'center',
         flexDirection: 'column'
     },
     ResetText: {

@@ -1,5 +1,5 @@
 import { Alert, FlatList, Image, StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { COLORS } from '../../utils/theme'
 import { ms } from '../../utils/responsive'
@@ -12,11 +12,16 @@ import SettingsCard from '../../components/ui/SettingsCard'
 import { settingsData } from '../../dummyData/Data'
 import { useAuth } from '../../context/AuthContext'
 import { useUser } from '../../hooks/useUser'
+import LogoutModal from '../../components/ui/LogoutModal'
+
+import { useTheme } from '../../context/ThemeContext'
 
 const Settings = () => {
     const navigation = useNavigation();
     const { logout } = useAuth();
     const { userData } = useUser();
+    const { isDarkMode, toggleTheme, theme } = useTheme();
+    const [isLogoutModalVisible, setLogoutModalVisible] = useState(false);
 
     const user = userData || {
         name: 'Guest User',
@@ -26,45 +31,40 @@ const Settings = () => {
     }
 
     const handleLogout = () => {
-        logout();
-        // Alert.alert(
-        //     "Logout",
-        //     "Are you sure you want to logout?",
-        //     [
-        //         {
-        //             text: "Cancel",
-        //             style: "cancel"
-        //         },
-        //         {
-        //             text: "Logout",
-        //             style: "destructive",
-        //             onPress: logout
-        //         }
-        //     ]
-        // );
+        setLogoutModalVisible(true);
     }
+
+    const handleNotificationToggle = async () => {
+        try {
+            const newValue = !user.pushNotificationsEnabled;
+            await updateProfile({ pushNotificationsEnabled: newValue });
+        } catch (error) {
+            Alert.alert('Error', 'Failed to update notification settings');
+        }
+    };
+
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
-            <View style={styles.container}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()}>
-                        <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
-                    <AppText.body style={styles.headerTitle}>Settings</AppText.body>
+                    <AppText.body style={[styles.headerTitle, { color: theme.colors.text }]}>Settings</AppText.body>
                 </View>
-                <View style={styles.profileCard}>
+                <View style={[styles.profileCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
                     <View style={styles.profileView}>
-                        <Image source={require('../../assets/user.png')} style={styles.profileImage} />
+                        <Image source={user.avatar ? { uri: user.avatar } : require('../../assets/user.png')} style={styles.profileImage} />
                         <View style={styles.profileInfo}>
-                            <AppText.body style={styles.profileName}>{user.name}</AppText.body>
-                            <AppText.body style={styles.profileusername}>@{user.username}</AppText.body>
+                            <AppText.body style={[styles.profileName, { color: theme.colors.text }]}>{user.name}</AppText.body>
+                            <AppText.body style={[styles.profileusername, { color: theme.colors.subtext }]}>@{user.username}</AppText.body>
                             <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
                                 <AppText.body style={styles.viewProfile}>View Profile</AppText.body>
                             </TouchableOpacity>
                         </View>
                     </View>
                     <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-                        <Ionicons name="chevron-forward-outline" size={24} color={COLORS.text} />
+                        <Ionicons name="chevron-forward-outline" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 </View>
                 <FlatList
@@ -74,6 +74,10 @@ const Settings = () => {
                             onPress={() => {
                                 if (item.title === 'Logout') {
                                     handleLogout();
+                                } else if (item.title === 'Dark Mode') {
+                                    toggleTheme();
+                                } else if (item.title === 'Push Notifications') {
+                                    handleNotificationToggle();
                                 } else {
                                     if (item.type !== 'toggle' && item.route) {
                                         navigation.navigate(item.route)
@@ -84,7 +88,7 @@ const Settings = () => {
                                 }
                             }}
                             activeOpacity={0.7}
-                            disabled={item.type === 'toggle'}
+                            disabled={item.type === 'toggle' && item.title !== 'Dark Mode' && item.title !== 'Push Notifications'}
                         >
                             <SettingsCard
                                 icon={item.icon}
@@ -92,12 +96,27 @@ const Settings = () => {
                                 subtitle={item.subtitle}
                                 type={item.type}
                                 color={item.color}
+                                value={
+                                    item.title === 'Dark Mode' ? isDarkMode : 
+                                    item.title === 'Push Notifications' ? (user.pushNotificationsEnabled ?? true) : 
+                                    false
+                                }
+                                onValueChange={
+                                    item.title === 'Dark Mode' ? toggleTheme : 
+                                    item.title === 'Push Notifications' ? handleNotificationToggle : 
+                                    undefined
+                                }
                             />
                         </TouchableOpacity>
                     )}
                     keyExtractor={(item) => item.id}
                 />
             </View>
+            <LogoutModal
+                isVisible={isLogoutModalVisible}
+                onClose={() => setLogoutModalVisible(false)}
+                onLogout={logout}
+            />
         </SafeAreaView>
     )
 }
