@@ -12,18 +12,20 @@ import { COLORS, RADIUS, SPACING } from '../../utils/theme';
 import { ms, vs } from '../../utils/responsive';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AppText from './AppText';
+import { useTheme } from '../../context/ThemeContext';
 
-// Brand Theme Colors
-const BRAND_PRIMARY = COLORS.primary;
-const INACTIVE_COLOR = COLORS.subtext;
+
+// Standard Tab Bar settings
 const TAB_BAR_HEIGHT = ms(65);
-const SAFE_BOTTOM_PADDING = Platform.OS === 'android' ? vs(10) : 0; // Extra breathing room for Android gesture bar
+const SAFE_BOTTOM_PADDING = Platform.OS === 'android' ? vs(10) : 0; 
 
 /**
  * Individual Tab Item Component
  */
 const TabItem = React.memo(({ route, isFocused, onPress, label }) => {
+    const { theme } = useTheme();
     const animation = useSharedValue(isFocused ? 1 : 0);
+
 
     React.useEffect(() => {
         animation.value = withSpring(isFocused ? 1 : 0, {
@@ -76,14 +78,14 @@ const TabItem = React.memo(({ route, isFocused, onPress, label }) => {
                     <Icon
                         name={getIcon(route.name, isFocused)}
                         size={ms(24)}
-                        color={isFocused ? BRAND_PRIMARY : INACTIVE_COLOR}
+                        color={isFocused ? theme.colors.primary : theme.colors.subtext}
                     />
                 </Animated.View>
                 <AppText.body
                     style={[
                         styles.label,
                         {
-                            color: isFocused ? BRAND_PRIMARY : INACTIVE_COLOR,
+                            color: isFocused ? theme.colors.primary : theme.colors.subtext,
                             fontWeight: isFocused ? '700' : '400'
                         }
                     ]}
@@ -100,6 +102,9 @@ const TabItem = React.memo(({ route, isFocused, onPress, label }) => {
  */
 const CustomTabBar = ({ state, descriptors, navigation }) => {
     const insets = useSafeAreaInsets();
+    const { theme } = useTheme();
+
+
 
     // Standard Tab Bar Height calculation
     // insets.bottom handles iOS Home Indicator and Android Gesture Bar
@@ -112,7 +117,9 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
             styles.container,
             {
                 height: containerHeight,
-                paddingBottom: bottomPadding
+                paddingBottom: bottomPadding,
+                backgroundColor: theme.colors.surface,
+                borderTopColor: theme.colors.border,
             }
         ]}>
             <View style={styles.tabWrapper}>
@@ -155,7 +162,6 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: COLORS.surface,
         borderTopLeftRadius: RADIUS.xl,
         borderTopRightRadius: RADIUS.xl,
         ...Platform.select({
@@ -167,12 +173,10 @@ const styles = StyleSheet.create({
             },
             android: {
                 elevation: 10,
-                borderTopWidth: 1,
-                borderTopColor: 'rgba(0,0,0,0.05)',
             },
         }),
         // Avoid using position absolute with negative offsets as it breaks responsiveness
-        position: 'relative', 
+        position: 'relative',
         bottom: 0,
         left: 0,
         right: 0,

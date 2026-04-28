@@ -8,6 +8,8 @@ import { storyData } from '../../dummyData/Data'
 import PostCard from '../../components/ui/PostCard'
 import { usePosts } from '../../hooks/usePosts'
 
+import { useTheme } from '../../context/ThemeContext'
+
 const FeedScreen = () => {
     const { 
         posts, 
@@ -17,23 +19,23 @@ const FeedScreen = () => {
         hasMore, 
         fetchPosts, 
         loadMorePosts, 
-        toggleLike 
+        toggleLike,
+        toggleSave 
     } = usePosts();
+    const { theme } = useTheme();
 
-    // Render footer loader for infinite scroll
     const renderFooter = useCallback(() => {
         if (!loadingMore) return <View style={{ height: vs(20) }} />;
         return (
             <View style={styles.footerLoader}>
-                <ActivityIndicator size="small" color={COLORS.primary} />
-                <AppText.body style={styles.loaderText}>Loading more posts...</AppText.body>
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+                <AppText.body style={[styles.loaderText, { color: theme.colors.subtext }]}>Loading more posts...</AppText.body>
             </View>
         );
-    }, [loadingMore]);
+    }, [loadingMore, theme]);
 
-    // Header component for FlashList (includes stories)
     const renderHeader = useMemo(() => (
-        <View style={styles.storyContainer} >
+        <View style={[styles.storyContainer, { borderBottomColor: theme.colors.border }]} >
             <FlatList
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -43,38 +45,35 @@ const FeedScreen = () => {
                     <View style={styles.storyItem}>
                         <View style={[
                             styles.storyImageContainer,
-                            item.id !== 'yours' && styles.storyRing
+                            item.id !== 'yours' && { borderColor: theme.colors.primary, padding: 2 }
                         ]}>
                             {item.id === 'yours' ? (
-                                <View style={styles.yourStoryPlaceholder}>
-                                    <Ionicons name="add" size={30} color={COLORS.primary} />
+                                <View style={[styles.yourStoryPlaceholder, { backgroundColor: theme.colors.surface, borderColor: theme.colors.primary }]}>
+                                    <Ionicons name="add" size={30} color={theme.colors.primary} />
                                 </View>
                             ) : (
-                                <Image
-                                    source={item.image}
-                                    style={styles.storyImage}
-                                />
+                                <Image source={item.image} style={styles.storyImage} />
                             )}
                         </View>
-                        <AppText.body style={styles.storyText} numberOfLines={1}>{item.name}</AppText.body>
+                        <AppText.body style={[styles.storyText, { color: theme.colors.text }]} numberOfLines={1}>{item.name}</AppText.body>
                     </View>
                 )}
                 keyExtractor={(item) => item.id.toString()}
             />
         </View>
-    ), []);
+    ), [theme]);
 
     if (loading && posts.length === 0) {
         return (
-            <View style={[styles.container, styles.centerContent]}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-                <AppText.body style={{ marginTop: vs(10) }}>Fetching your feed...</AppText.body>
+            <View style={[styles.container, styles.centerContent, { backgroundColor: theme.colors.background }]}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <AppText.body style={{ marginTop: vs(10), color: theme.colors.text }}>Fetching your feed...</AppText.body>
             </View>
         );
     }
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <FlatList
                 data={posts}
                 ListHeaderComponent={renderHeader}
@@ -82,37 +81,27 @@ const FeedScreen = () => {
                     <PostCard
                         post={item}
                         onLike={toggleLike}
+                        onSave={toggleSave}
                         onComment={(postId) => console.log('Open comments for', postId)}
                     />
                 )}
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerStyle={styles.feedScrollContent}
-                
-                // Infinite Scroll Props
                 onEndReached={loadMorePosts}
-                onEndReachedThreshold={0.5} // Trigger when half of the last screen is visible
+                onEndReachedThreshold={0.5}
                 ListFooterComponent={renderFooter}
-                
-                // Pull to Refresh
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={fetchPosts}
-                        colors={[COLORS.primary]} // Android
-                        tintColor={COLORS.primary} // iOS
+                        colors={[theme.colors.primary]}
+                        tintColor={theme.colors.primary}
                     />
                 }
-
-                // Performance Optimizations
-                initialNumToRender={5}
-                maxToRenderPerBatch={5}
-                windowSize={10}
-                removeClippedSubviews={true} // Frees up resources for off-screen items
-                // showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
                     !loading && (
                         <View style={styles.centerContent}>
-                            <AppText.body>No posts found. Start following people!</AppText.body>
+                            <AppText.body style={{ color: theme.colors.subtext }}>No posts found. Start following people!</AppText.body>
                         </View>
                     )
                 }

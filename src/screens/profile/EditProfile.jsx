@@ -13,8 +13,11 @@ import { useUser } from '../../hooks/useUser'
 import { launchImageLibrary } from 'react-native-image-picker'
 import { useRoute } from '@react-navigation/native'
 
+import { useTheme } from '../../context/ThemeContext'
+
 const EditProfile = () => {
     const route = useRoute();
+    const { theme, isDarkMode } = useTheme();
     const initialUser = route.params?.user || {};
 
     const [name, setName] = useState(initialUser.name || '');
@@ -47,58 +50,60 @@ const EditProfile = () => {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+                    <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
-                <AppText.body style={styles.headerTitle}>Edit Profile</AppText.body>
+                <AppText.body style={[styles.headerTitle, { color: theme.colors.text }]}>Edit Profile</AppText.body>
             </View>
             <View style={styles.content}>
                 <TouchableOpacity style={styles.profileImageContainer} onPress={handlePickImage}>
                     <Image
-                        source={avatar ? { uri: avatar } : require('../../assets/Mb.jpeg')}
-                        style={styles.profileImage}
+                        source={avatar ? { uri: avatar } : require('../../assets/user.png')}
+                        style={[styles.profileImage, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
                     />
-                    <AppText.body style={styles.changeImageText}>Change Image</AppText.body>
-                    <View style={styles.editButton}>
-                        <Ionicons name="camera" size={24} color={COLORS.background} />
+                    <AppText.body style={[styles.changeImageText, { color: theme.colors.primary }]}>Change Image</AppText.body>
+                    <View style={[styles.editButton, { backgroundColor: theme.colors.primary }]}>
+                        <Ionicons name="camera" size={20} color="#fff" />
                     </View>
                 </TouchableOpacity>
-                <View style={styles.form}>
-                    <AppText.body style={styles.label}>Name</AppText.body>
+
+                <View style={[styles.form, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, shadowColor: isDarkMode ? 'transparent' : '#000' }]}>
+                    <AppText.body style={[styles.label, { color: theme.colors.text }]}>Name</AppText.body>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
                         placeholder="Name"
-                        placeholderTextColor={COLORS.grey}
+                        placeholderTextColor={theme.colors.subtext}
                         value={name}
                         onChangeText={setName}
                     />
-                    <AppText.body style={styles.label}>Username</AppText.body>
+                    <AppText.body style={[styles.label, { color: theme.colors.text }]}>Username</AppText.body>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
                         placeholder="Username"
-                        placeholderTextColor={COLORS.grey}
+                        placeholderTextColor={theme.colors.subtext}
                         value={username}
                         onChangeText={setUsername}
-                        editable={true} // Typically username isn't editable easily
+                        editable={true}
                     />
-                    <AppText.body style={styles.label}>Bio</AppText.body>
+                    <AppText.body style={[styles.label, { color: theme.colors.text }]}>Bio</AppText.body>
                     <TextInput
-                        style={[styles.input, { height: ms(100), textAlignVertical: 'top' }]}
+                        style={[styles.input, { height: ms(80), textAlignVertical: 'top', color: theme.colors.text, borderColor: theme.colors.border }]}
                         placeholder="Bio"
-                        placeholderTextColor={COLORS.grey}
+                        placeholderTextColor={theme.colors.subtext}
                         value={bio}
                         onChangeText={setBio}
                         multiline
                     />
                 </View>
+
                 <TouchableOpacity
-                    style={[styles.saveButton, loading && { opacity: 0.5 }]}
+                    style={[styles.saveButton, { backgroundColor: theme.colors.primary }, loading && { opacity: 0.5 }]}
                     onPress={handleSave}
                     disabled={loading}
                 >
-                    <AppText.body style={styles.saveButtonText}>
+                    <AppText.body style={[styles.saveButtonText, { color: '#fff' }]}>
                         {loading ? 'Saving...' : 'Save'}
                     </AppText.body>
                 </TouchableOpacity>

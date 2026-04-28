@@ -4,36 +4,39 @@ import auth from '@react-native-firebase/auth';
 
 const userCollection = firestore().collection('users');
 
-export const updateProfile = async (userData) => {
+export const updateProfile = async (data) => {
     try {
         const user = auth().currentUser;
         if (!user) throw new Error('User not authenticated');
 
-        let avatarUrl = userData.avatar;
+        let avatarUrl = data.avatar;
 
-        if (userData.avatar && !userData.avatar.startsWith('http')) {
-            const filename = userData.avatar.substring(userData.avatar.lastIndexOf('/') + 1);
+        if (data.avatar && typeof data.avatar === 'string' && !data.avatar.startsWith('http')) {
+            const filename = data.avatar.substring(data.avatar.lastIndexOf('/') + 1);
             const storageRef = storage().ref(`avatars/${user.uid}/${filename}`);
-            await storageRef.putFile(userData.avatar);
+            await storageRef.putFile(data.avatar);
             avatarUrl = await storageRef.getDownloadURL();
         }
 
         const updatedData = {
-            name: userData.name,
-            username: userData.username,
-            bio: userData.bio,
-            avatar: avatarUrl,
+            ...data,
             updatedAt: firestore.FieldValue.serverTimestamp(),
         };
+
+        if (avatarUrl) {
+            updatedData.avatar = avatarUrl;
+        }
 
         // Update Firestore
         await userCollection.doc(user.uid).set(updatedData, { merge: true });
 
-        // Update Firebase Auth profile
-        await user.updateProfile({
-            displayName: userData.name,
-            photoURL: avatarUrl,
-        });
+        // Update Firebase Auth profile if name or avatar changed
+        if (data.name || avatarUrl) {
+            await user.updateProfile({
+                displayName: data.name || user.displayName,
+                photoURL: avatarUrl || user.photoURL,
+            });
+        }
 
         return updatedData;
     } catch (error) {

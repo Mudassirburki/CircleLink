@@ -7,10 +7,12 @@ import auth from '@react-native-firebase/auth';
 import EditProfile from '../screens/profile/EditProfile';
 
 import SplashScreen from '../screens/SplashScreen';
+import useNotifications from '../hooks/useNotifications';
 
 const Stack = createNativeStackNavigator();
 
 const RootNavigator = () => {
+    useNotifications();
     const [initializing, setInitializing] = useState(true);
     const [user, setUser] = useState(null);
     const [splashComplete, setSplashComplete] = useState(false);

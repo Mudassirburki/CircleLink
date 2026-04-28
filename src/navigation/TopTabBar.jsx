@@ -4,18 +4,20 @@ import LiveScreen from '../screens/home/LiveScreen';
 import ExploreScreen from '../screens/home/ExploreScreen';
 import { COLORS } from '../utils/theme';
 import { ms } from '../utils/responsive';
+import { useTheme } from '../context/ThemeContext';
 
 const Tab = createMaterialTopTabNavigator();
 
 const TopTabBar = () => {
+    const { theme } = useTheme();
     return (
         <Tab.Navigator
             screenOptions={{
 
-                tabBarActiveTintColor: COLORS.secondary,
-                tabBarInactiveTintColor: COLORS.grey,
+                tabBarActiveTintColor: theme.colors.secondary,
+                tabBarInactiveTintColor: theme.colors.grey,
                 tabBarIndicatorStyle: {
-                    backgroundColor: COLORS.secondary,
+                    backgroundColor: theme.colors.secondary,
                     height: 3,
                     borderRadius: 3,
 
@@ -28,13 +30,13 @@ const TopTabBar = () => {
 
                 },
                 tabBarStyle: {
-                    backgroundColor: COLORS.background,
+                    backgroundColor: theme.colors.background,
                     elevation: 0,
                     shadowOpacity: 0,
                     borderBottomWidth: 1,
-                    borderBottomColor: COLORS.border,
+                    borderBottomColor: theme.colors.border,
                 },
-                tabBarPressColor: COLORS.transparent,
+                tabBarPressColor: theme.colors.transparent,
             }}
         >
             <Tab.Screen name="Feed" component={FeedScreen} />

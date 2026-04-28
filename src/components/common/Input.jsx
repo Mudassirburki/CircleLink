@@ -1,20 +1,22 @@
-import { StyleSheet, TextInput, View } from 'react-native'
-import React from 'react'
-import Ionicons from 'react-native-vector-icons/Ionicons'
-import { s, vs, ms } from '../../utils/responsive'
+import { StyleSheet, TextInput, View } from 'react-native';
+import { useTheme } from '../../context/ThemeContext'
+import { ms, s, vs } from '../../utils/responsive';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const Input = ({ placeholder, icon, ...props }) => {
+    const { theme } = useTheme();
+
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             {icon && (
                 <View style={styles.iconContainer}>
-                    <Ionicons name={icon} size={ms(20)} color="#AF1A5D" />
+                    <Ionicons name={icon} size={ms(20)} color={theme.colors.primary} />
                 </View>
             )}
             <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.colors.text }]}
                 placeholder={placeholder}
-                placeholderTextColor="#ccc"
+                placeholderTextColor={theme.colors.subtext}
                 {...props}
             />
         </View>
@@ -29,11 +31,9 @@ const styles = StyleSheet.create({
         height: vs(55),
         flexDirection: 'row',
         alignItems: 'center',
-        borderColor: '#E5E5EA',
         borderWidth: 1,
         borderRadius: s(15),
         marginVertical: vs(10),
-        backgroundColor: '#fff',
         paddingHorizontal: s(15),
     },
     iconContainer: {
@@ -42,7 +42,6 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         height: '100%',
-        color: '#1C1C1E',
         fontSize: ms(16),
         fontWeight: '500',
     },

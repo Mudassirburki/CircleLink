@@ -101,10 +101,18 @@ export const toggleLike = async (postId, userId, isLiked) => {
                 likes: firestore.FieldValue.arrayRemove(userId),
                 likesCount: firestore.FieldValue.increment(-1),
             });
+            // Optional: Remove from root likes collection if you want clean data
+            await firestore().collection('likes').doc(`${userId}_${postId}`).delete();
         } else {
             await postRef.update({
                 likes: firestore.FieldValue.arrayUnion(userId),
                 likesCount: firestore.FieldValue.increment(1),
+            });
+            // 🚀 Write to root-level likes collection to trigger Cloud Function
+            await firestore().collection('likes').doc(`${userId}_${postId}`).set({
+                postId,
+                userId,
+                createdAt: firestore.FieldValue.serverTimestamp(),
             });
         }
     } catch (error) {
@@ -112,6 +120,25 @@ export const toggleLike = async (postId, userId, isLiked) => {
         throw error;
     }
 };
+
+export const toggleSavePost = async (postId, userId, isSaved) => {
+    try {
+        const postRef = postCollection.doc(postId);
+        if (isSaved) {
+            await postRef.update({
+                savedBy: firestore.FieldValue.arrayRemove(userId),
+            });
+        } else {
+            await postRef.update({
+                savedBy: firestore.FieldValue.arrayUnion(userId),
+            });
+        }
+    } catch (error) {
+        console.error('Error toggling save:', error);
+        throw error;
+    }
+};
+
 
 export const addComment = async (postId, text) => {
     try {
@@ -151,6 +178,58 @@ export const getComments = (postId, callback) => {
         }, error => {
             console.error('Error fetching comments:', error);
         });
+};
+
+export const getLikedPosts = (userId, callback) => {
+    return postCollection
+        .where('likes', 'array-contains', userId)
+        .onSnapshot(snapshot => {
+            const posts = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            callback(posts);
+        }, error => {
+            console.error('Error fetching liked posts:', error);
+        });
+};
+
+export const getSavedPosts = (userId, callback) => {
+    return postCollection
+        .where('savedBy', 'array-contains', userId)
+        .onSnapshot(snapshot => {
+            const posts = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            callback(posts);
+        }, error => {
+            console.error('Error fetching saved posts:', error);
+        });
+};
+
+
+export const getPostById = async (postId) => {
+    try {
+        const doc = await postCollection.doc(postId).get();
+        if (doc.exists) {
+            return { id: doc.id, ...doc.data() };
+        }
+        return null;
+    } catch (error) {
+        console.error('Error fetching post by ID:', error);
+        throw error;
+    }
+};
+
+export const onPostUpdate = (postId, callback) => {
+    return postCollection.doc(postId).onSnapshot(doc => {
+        if (doc.exists) {
+            callback({ id: doc.id, ...doc.data() });
+        }
+    }, error => {
+        console.error('Error listening to post updates:', error);
+    });
 };
 
 export const getUserPosts = async (userId) => {

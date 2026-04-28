@@ -6,15 +6,17 @@ import SavedPosts from '../screens/profile/tabs/SavedPosts';
 import { COLORS } from '../utils/theme';
 import { ms } from '../utils/responsive';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useTheme } from '../context/ThemeContext';
 
 const Tab = createMaterialTopTabNavigator();
 
 const ProfileTabs = ({ userId }) => {
+    const { theme } = useTheme();
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
-                tabBarActiveTintColor: COLORS.secondary,
-                tabBarInactiveTintColor: COLORS.grey,
+                tabBarActiveTintColor: theme.colors.secondary,
+                tabBarInactiveTintColor: theme.colors.grey,
                 tabBarIndicatorStyle: {
                     backgroundColor: COLORS.secondary,
                     height: 3,
@@ -26,11 +28,11 @@ const ProfileTabs = ({ userId }) => {
                     textTransform: 'none',
                 },
                 tabBarStyle: {
-                    backgroundColor: COLORS.background,
+                    backgroundColor: theme.colors.background,
                     elevation: 0,
                     shadowOpacity: 0,
                     borderBottomWidth: 1,
-                    borderBottomColor: COLORS.border,
+                    borderBottomColor: theme.colors.border,
                 },
                 tabBarIcon: ({ color, focused }) => {
                     let iconName;

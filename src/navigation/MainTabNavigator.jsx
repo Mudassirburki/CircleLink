@@ -5,7 +5,7 @@ import SocialNavigator from './SocialNavigator';
 import ProfileNavigator from './ProfileNavigator';
 import PostScreen from '../screens/home/PostScreen';
 import CusttomBottomTab from '../components/common/CusttomBottomTab';
-import NotificationScreen from '../screens/home/NotificationScreen';
+import NotificationScreen from '../screens/NotificationScreen';
 
 const Tab = createBottomTabNavigator();
 
