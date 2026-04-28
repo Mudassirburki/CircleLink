@@ -1,125 +1,101 @@
-import React, { useState, useEffect } from 'react';
-import {
-    View,
-    FlatList,
-    StyleSheet,
-    TouchableOpacity,
-    ActivityIndicator,
-    RefreshControl
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
-import { useNavigation } from '@react-navigation/native';
-import { COLORS, SPACING } from '../utils/theme';
+import React from 'react';
+import { View, FlatList, StyleSheet, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import AppText from '../components/common/AppText';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import { ms } from '../utils/responsive';
-import notificationHistoryService from '../services/notificationHistoryService';
+import { useNotifications } from '../hooks/useNotifications';
 import { useTheme } from '../context/ThemeContext';
+import { ms, vs, s } from '../utils/responsive';
+import Icon from 'react-native-vector-icons/Ionicons';
+import moment from 'moment';
+import { useNavigation } from '@react-navigation/native';
+import NotificationService from '../services/notificationService';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const NotificationScreen = () => {
-    const [notifications, setNotifications] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
-    const navigation = useNavigation();
-    const userId = auth().currentUser?.uid;
+    const { notifications, loading, refreshing, fetchNotifications, markAsRead, markAllAsRead } = useNotifications();
     const { theme } = useTheme();
+    const navigation = useNavigation();
 
-    useEffect(() => {
-        if (!userId) return;
-
-        console.log('[NotificationScreen] Initializing real-time listener.');
-        const unsubscribe = notificationHistoryService.onNotificationsUpdate((data) => {
-            setNotifications(data);
-            setLoading(false);
-        });
-
-        return () => unsubscribe && unsubscribe();
-    }, [userId]);
-
-    const onRefresh = async () => {
-        setRefreshing(true);
-        setTimeout(() => setRefreshing(false), 800);
-    };
-
-    const handleNotificationClick = async (item) => {
-        try {
-            await notificationHistoryService.markAsRead(item.id);
-        } catch (error) {
-            console.error('[NotificationScreen] Error marking read:', error);
-        }
-
-        if (item.type === 'like' || item.type === 'comment') {
-            if (item.postId) navigation.navigate('PostDetail', { postId: item.postId });
-        } else if (item.type === 'follow') {
-            if (item.userId) navigation.navigate('Profile', { userId: item.userId });
-        }
-    };
-
-    const getIcon = (type) => {
-        switch (type) {
-            case 'like': return { name: 'heart', color: '#FF3040' };
-            case 'comment': return { name: 'chatbubble', color: '#1A73E8' };
-            case 'follow': return { name: 'person-add', color: '#10B981' };
-            default: return { name: 'notifications', color: theme.colors.primary };
-        }
-    };
-
-    const renderItem = ({ item }) => {
-        const icon = getIcon(item.type);
-        const timeAgo = item.createdAt ? new Date(item.createdAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-
-        return (
-            <TouchableOpacity 
-                style={[styles.itemContainer, !item.read && { backgroundColor: theme.colors.primary + '08' }]}
-                onPress={() => handleNotificationClick(item)}
-            >
-                <View style={[styles.iconWrapper, { backgroundColor: icon.color + '15' }]}>
-                    <Ionicons name={icon.name} size={ms(18)} color={icon.color} />
+    const renderItem = ({ item }) => (
+        <TouchableOpacity
+            style={[
+                styles.notificationItem,
+                { borderBottomColor: theme.colors.border },
+                !item.read && { backgroundColor: theme.colors.primary + '10' } // Light highlight for unread
+            ]}
+            onPress={() => {
+                if (!item.read) markAsRead(item.id);
+                NotificationService.handleNotificationClick(item, navigation);
+            }}
+        >
+            <View style={styles.iconContainer}>
+                <View style={[styles.typeIcon, { backgroundColor: item.type === 'like' ? '#FF4B4B' : '#4B7BFF' }]}>
+                    <Icon
+                        name={item.type === 'like' ? 'heart' : 'person'}
+                        size={ms(14)}
+                        color="#FFF"
+                    />
                 </View>
-                
-                <View style={styles.content}>
-                    <AppText.body style={[styles.message, { color: theme.colors.text }]}>
-                        <AppText.body style={[styles.boldText, { color: theme.colors.text }]}>{item.title}</AppText.body> {item.body}
-                    </AppText.body>
-                    <AppText.body style={[styles.time, { color: theme.colors.subtext }]}>{timeAgo}</AppText.body>
-                </View>
+            </View>
 
-                {!item.read && <View style={[styles.unreadDot, { backgroundColor: theme.colors.primary }]} />}
-            </TouchableOpacity>
-        );
-    };
+            <View style={styles.contentContainer}>
+                <AppText.body style={[styles.body, { color: theme.colors.text }]} numberOfLines={2}>
+                    {item.body}
+                </AppText.body>
+                <AppText.body style={[styles.time, { color: theme.colors.subtext }]}>
+                    {moment(item.createdAt?.toDate?.() || new Date()).fromNow()}
+                </AppText.body>
+            </View>
 
-    if (loading) {
+            {!item.read && (
+                <View style={[styles.unreadDot, { backgroundColor: theme.colors.primary }]} />
+            )}
+        </TouchableOpacity>
+    );
+
+    if (loading && notifications.length === 0) {
         return (
-            <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
+            <View style={[styles.container, styles.center, { backgroundColor: theme.colors.background }]}>
+                <ActivityIndicator color={theme.colors.primary} />
             </View>
         );
     }
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
-                <AppText.h2 style={[styles.headerTitle, { color: theme.colors.text }]}>Activity</AppText.h2>
-            </View>
+        <SafeAreaView style={{ flex: 1 }}>
+            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+                <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
+                    <AppText.h2 style={{ color: theme.colors.text }}>Notifications</AppText.h2>
+                    {notifications.some(n => !n.read) && (
+                        <TouchableOpacity onPress={markAllAsRead}>
+                            <AppText.body style={{ color: theme.colors.primary, fontWeight: '600' }}>
+                                Mark All as Read
+                            </AppText.body>
+                        </TouchableOpacity>
+                    )}
+                </View>
 
-            <FlatList
-                data={notifications}
-                renderItem={renderItem}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.listContent}
-                refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} tintColor={theme.colors.primary} />
-                }
-                ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                        <Ionicons name="notifications-outline" size={ms(60)} color={theme.colors.border} />
-                        <AppText.body style={[styles.emptyText, { color: theme.colors.subtext }]}>No activity yet.</AppText.body>
-                    </View>
-                }
-            />
+                <FlatList
+                    data={notifications}
+                    keyExtractor={item => item.id}
+                    renderItem={renderItem}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={fetchNotifications}
+                            colors={[theme.colors.primary]}
+                        />
+                    }
+                    ListEmptyComponent={
+                        <View style={styles.emptyContainer}>
+                            <Icon name="notifications-off-outline" size={ms(50)} color={theme.colors.subtext} />
+                            <AppText.body style={{ color: theme.colors.subtext, marginTop: vs(10) }}>
+                                No notifications yet
+                            </AppText.body>
+                        </View>
+                    }
+                    contentContainerStyle={{ paddingBottom: vs(20) }}
+                />
+            </View>
         </SafeAreaView>
     );
 };
@@ -128,65 +104,54 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    header: {
-        paddingHorizontal: SPACING.m,
-        paddingVertical: SPACING.s,
-        borderBottomWidth: 0.5,
-    },
-    headerTitle: {
-        fontWeight: 'bold',
-        fontSize: ms(22),
-    },
-    listContent: {
-        paddingBottom: ms(20),
-    },
-    itemContainer: {
-        flexDirection: 'row',
-        paddingHorizontal: SPACING.m,
-        paddingVertical: ms(16),
-        alignItems: 'center',
-    },
-    iconWrapper: {
-        width: ms(44),
-        height: ms(44),
-        borderRadius: ms(22),
+    center: {
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: SPACING.m,
     },
-    content: {
+    header: {
+        paddingHorizontal: s(20),
+        paddingVertical: vs(15),
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottomWidth: 1,
+    },
+    notificationItem: {
+        flexDirection: 'row',
+        padding: s(15),
+        alignItems: 'center',
+        borderBottomWidth: 1,
+    },
+    iconContainer: {
+        marginRight: s(12),
+    },
+    typeIcon: {
+        width: ms(28),
+        height: ms(28),
+        borderRadius: ms(14),
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    contentContainer: {
         flex: 1,
     },
-    message: {
+    body: {
         fontSize: ms(14),
-        lineHeight: ms(20),
-    },
-    boldText: {
-        fontWeight: 'bold',
+        marginBottom: vs(2),
     },
     time: {
         fontSize: ms(12),
-        marginTop: ms(2),
     },
     unreadDot: {
         width: ms(8),
         height: ms(8),
         borderRadius: ms(4),
-        marginLeft: SPACING.s,
-    },
-    center: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        marginLeft: s(10),
     },
     emptyContainer: {
-        marginTop: ms(120),
+        marginTop: vs(100),
         alignItems: 'center',
-        paddingHorizontal: SPACING.xl,
-    },
-    emptyText: {
-        marginTop: SPACING.m,
-        fontSize: ms(16),
+        justifyContent: 'center',
     }
 });
 

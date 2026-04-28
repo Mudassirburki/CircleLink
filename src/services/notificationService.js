@@ -44,23 +44,37 @@ class NotificationService {
     }
 
     async handleNotificationClick(remoteMessage, navigation) {
-        const data = remoteMessage.notification ? remoteMessage.notification.data : remoteMessage.data;
+        if (!navigation) return;
+        
+        // Handle both FCM message and Firestore notification object
+        const data = remoteMessage.data || remoteMessage;
         const { type, postId, userId } = data || {};
 
-        if (!navigation) return;
+        console.log('[NotificationService] Handling click:', type, { postId, userId });
 
         switch (type) {
             case 'like':
             case 'comment':
-                if (postId) navigation.navigate('PostDetail', { postId });
+                if (postId) {
+                    navigation.navigate('Home', {
+                        screen: 'PostDetail',
+                        params: { postId }
+                    });
+                }
                 break;
             case 'follow':
-                if (userId) navigation.navigate('Profile', { userId });
+                if (userId) {
+                    navigation.navigate('Profile', {
+                        screen: 'ProfileScreen',
+                        params: { userId }
+                    });
+                }
                 break;
             default:
-                console.log('Unknown notification type:', type);
+                console.log('[NotificationService] Unknown type:', type);
         }
     }
+
 }
 
 export default new NotificationService();
