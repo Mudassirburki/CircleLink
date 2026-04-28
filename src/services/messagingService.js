@@ -1,6 +1,8 @@
 import messaging from '@react-native-firebase/messaging';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import NotificationService from './notificationService';
+
 
 class MessagingService {
     /**
@@ -62,6 +64,28 @@ class MessagingService {
             console.log('[MessagingService] Handling message in background:', remoteMessage);
         });
     }
+
+    /**
+     * Setup interaction listeners for background/quit states
+     */
+    setupInteractionListeners(navigation) {
+        // 1. App was opened from a quit state
+        messaging()
+            .getInitialNotification()
+            .then(remoteMessage => {
+                if (remoteMessage) {
+                    console.log('[MessagingService] Init Notification:', remoteMessage);
+                    NotificationService.handleNotificationClick(remoteMessage, navigation);
+                }
+            });
+
+        // 2. App was opened from background state
+        messaging().onNotificationOpenedApp(remoteMessage => {
+            console.log('[MessagingService] Background Notification:', remoteMessage);
+            NotificationService.handleNotificationClick(remoteMessage, navigation);
+        });
+    }
 }
+
 
 export default new MessagingService();

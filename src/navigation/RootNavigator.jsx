@@ -7,15 +7,20 @@ import auth from '@react-native-firebase/auth';
 import EditProfile from '../screens/profile/EditProfile';
 
 import SplashScreen from '../screens/SplashScreen';
-import useNotifications from '../hooks/useNotifications';
+import { useNotifications } from '../hooks/useNotifications';
+import messagingService from '../services/messagingService';
+import { useNavigation } from '@react-navigation/native';
 
 const Stack = createNativeStackNavigator();
 
 const RootNavigator = () => {
-    useNotifications();
+    const { unreadCount } = useNotifications(); // Keeps real-time listener active
     const [initializing, setInitializing] = useState(true);
     const [user, setUser] = useState(null);
     const [splashComplete, setSplashComplete] = useState(false);
+    
+    // We can't use useNavigation here inside the navigator itself easily 
+    // but the setupInteractionListeners might need a navigation ref or be called inside a component that has it.
 
     // Handle user state changes
     function onAuthStateChanged(user) {
@@ -25,7 +30,7 @@ const RootNavigator = () => {
 
     useEffect(() => {
         const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
-        return subscriber; // unsubscribe on unmount
+        return subscriber; 
     }, []);
 
     // Show splash until BOTH auth is initialized and animation is complete
@@ -37,12 +42,12 @@ const RootNavigator = () => {
         <Stack.Navigator 
             screenOptions={{ 
                 headerShown: false,
-                animation: 'fade' // Smooth transition between screens
+                animation: 'fade' 
             }}
         >
             {user ? (
                 <>
-                    <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+                    <Stack.Screen name="MainTabs" component={MainTabsWrapper} />
                     <Stack.Screen name="Settings" component={Settings} />
                     <Stack.Screen name="EditProfile" component={EditProfile} />
                 </>
@@ -51,6 +56,17 @@ const RootNavigator = () => {
             )}
         </Stack.Navigator>
     );
+};
+
+/**
+ * Wrapper to get navigation prop for messaging listeners
+ */
+const MainTabsWrapper = ({ navigation }) => {
+    useEffect(() => {
+        messagingService.setupInteractionListeners(navigation);
+    }, [navigation]);
+
+    return <MainTabNavigator />;
 };
 
 export default RootNavigator;

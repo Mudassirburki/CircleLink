@@ -9,20 +9,23 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, RADIUS, SPACING } from '../../utils/theme';
-import { ms, vs } from '../../utils/responsive';
+import { ms, s, vs } from '../../utils/responsive';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AppText from './AppText';
 import { useTheme } from '../../context/ThemeContext';
+import { useNotifications } from '../../hooks/useNotifications';
+
 
 
 // Standard Tab Bar settings
 const TAB_BAR_HEIGHT = ms(65);
-const SAFE_BOTTOM_PADDING = Platform.OS === 'android' ? vs(10) : 0; 
+const SAFE_BOTTOM_PADDING = Platform.OS === 'android' ? vs(10) : 0;
 
 /**
  * Individual Tab Item Component
  */
-const TabItem = React.memo(({ route, isFocused, onPress, label }) => {
+const TabItem = React.memo(({ route, isFocused, onPress, label, badgeCount }) => {
+
     const { theme } = useTheme();
     const animation = useSharedValue(isFocused ? 1 : 0);
 
@@ -80,7 +83,15 @@ const TabItem = React.memo(({ route, isFocused, onPress, label }) => {
                         size={ms(24)}
                         color={isFocused ? theme.colors.primary : theme.colors.subtext}
                     />
+                    {route.name === 'Notification' && badgeCount > 0 && (
+                        <View style={[styles.badge, { backgroundColor: theme.colors.primary }]}>
+                            <AppText.body style={styles.badgeText}>
+                                {badgeCount > 99 ? '99+' : badgeCount}
+                            </AppText.body>
+                        </View>
+                    )}
                 </Animated.View>
+
                 <AppText.body
                     style={[
                         styles.label,
@@ -103,6 +114,8 @@ const TabItem = React.memo(({ route, isFocused, onPress, label }) => {
 const CustomTabBar = ({ state, descriptors, navigation }) => {
     const insets = useSafeAreaInsets();
     const { theme } = useTheme();
+    const { unreadCount } = useNotifications();
+
 
 
 
@@ -152,7 +165,9 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
                             label={label}
                             isFocused={isFocused}
                             onPress={handlePress}
+                            badgeCount={route.name === 'Notification' ? unreadCount : 0}
                         />
+
                     );
                 })}
             </View>
@@ -199,6 +214,24 @@ const styles = StyleSheet.create({
     label: {
         fontSize: ms(12),
         marginTop: vs(4),
+    },
+    badge: {
+        position: 'absolute',
+        top: -vs(5),
+        right: -s(8),
+        minWidth: ms(16),
+        height: ms(16),
+        borderRadius: ms(8),
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: s(2),
+        borderWidth: 1,
+        borderColor: '#FFF',
+    },
+    badgeText: {
+        color: '#FFF',
+        fontSize: ms(9),
+        fontWeight: 'bold',
     },
 });
 

@@ -1,55 +1,114 @@
-import { useEffect } from 'react';
-import messaging from '@react-native-firebase/messaging';
-import messagingService from '../services/messagingService';
-import notificationService from '../services/notificationService';
-import { useNavigation } from '@react-navigation/native';
-import notifee, { EventType } from '@notifee/react-native';
+import { useState, useEffect, useCallback } from 'react';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
-const useNotifications = () => {
-    const navigation = useNavigation();
+export const useNotifications = () => {
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
+    const currentUser = auth().currentUser;
+
+    const fetchNotifications = useCallback(async () => {
+        if (!currentUser) return;
+
+        try {
+            setRefreshing(true);
+            const snapshot = await firestore()
+                .collection('notifications')
+                .doc(currentUser.uid)
+                .collection('userNotifications')
+                .orderBy('createdAt', 'desc')
+                .get();
+
+            const data = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            
+            setNotifications(data);
+        } catch (error) {
+            console.error('[useNotifications] Error fetching:', error);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    }, [currentUser]);
+
+    // Real-time listener for history and badges
     useEffect(() => {
-        const initialize = async () => {
-            const hasPermission = await notificationService.requestPermission();
-            if (hasPermission) {
-                await messagingService.getFcmToken();
-                messagingService.onTokenRefresh();
-            }
-        };
+        if (!currentUser) return;
 
-        initialize();
+        const unsubscribe = firestore()
+            .collection('notifications')
+            .doc(currentUser.uid)
+            .collection('userNotifications')
+            .orderBy('createdAt', 'desc')
+            .onSnapshot(snapshot => {
+                if (snapshot) {
+                    const data = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    setNotifications(data);
+                    
+                    // Update unread count
+                    const unread = data.filter(n => n.read === false).length;
+                    setUnreadCount(unread);
+                    setLoading(false);
+                }
+            }, error => {
+                console.error('[useNotifications] Snapshot error:', error);
+            });
 
-        // Foreground messages
-        const unsubscribeMessaging = messaging().onMessage(async remoteMessage => {
-            console.log('FCM Foreground Message:', remoteMessage);
-            await notificationService.displayNotification(remoteMessage);
-        });
+        return () => unsubscribe();
+    }, [currentUser]);
 
-        // Background/Quit state clicks (FCM)
-        const unsubscribeOpenedApp = messaging().onNotificationOpenedApp(remoteMessage => {
-            notificationService.handleNotificationClick(remoteMessage, navigation);
-        });
+    const markAsRead = async (notificationId) => {
+        if (!currentUser) return;
 
-        // Initial notification (Quit state)
-        messaging().getInitialNotification().then(remoteMessage => {
-            if (remoteMessage) {
-                notificationService.handleNotificationClick(remoteMessage, navigation);
-            }
-        });
+        try {
+            await firestore()
+                .collection('notifications')
+                .doc(currentUser.uid)
+                .collection('userNotifications')
+                .doc(notificationId)
+                .update({ read: true });
+        } catch (error) {
+            console.error('[useNotifications] Error marking as read:', error);
+        }
+    };
 
-        // Notifee clicks (Foreground)
-        const unsubscribeNotifee = notifee.onForegroundEvent(({ type, detail }) => {
-            if (type === EventType.PRESS) {
-                notificationService.handleNotificationClick(detail, navigation);
-            }
-        });
+    const markAllAsRead = async () => {
+        if (!currentUser) return;
 
-        return () => {
-            unsubscribeMessaging();
-            unsubscribeOpenedApp();
-            unsubscribeNotifee();
-        };
-    }, [navigation]);
+        try {
+            const batch = firestore().batch();
+            const unreadNotifs = notifications.filter(n => !n.read);
+            
+            unreadNotifs.forEach(n => {
+                const ref = firestore()
+                    .collection('notifications')
+                    .doc(currentUser.uid)
+                    .collection('userNotifications')
+                    .doc(n.id);
+                batch.update(ref, { read: true });
+            });
+
+            await batch.commit();
+        } catch (error) {
+            console.error('[useNotifications] Error marking all read:', error);
+        }
+    };
+
+    return {
+        notifications,
+        unreadCount,
+        loading,
+        refreshing,
+        fetchNotifications,
+        markAsRead,
+        markAllAsRead
+    };
 };
-
-export default useNotifications;
