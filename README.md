@@ -17,10 +17,17 @@ CircleLink is a modern social networking application designed to connect people 
 ## 🛠️ Tech Stack
 
 - **Mobile App:** React Native  
-- **Backend:** Firebase / Node.js  
-- **Database:** Firestore / MongoDB  
+- **Backend:** Firebase  
+- **Database:** Firestore   
 
 ---
+# My Project
+
+## 🔗 GitHub Repo
+https://github.com/Mudassirburki/CircleLink.git
+
+## 🎥 Demo Video
+https://drive.google.com/file/d/1K1Iq-CM-pgxkzLcxHBdFMnDIh-xjroTd/view?usp=drivesdk
 
 ## 📦 Getting Started
 
